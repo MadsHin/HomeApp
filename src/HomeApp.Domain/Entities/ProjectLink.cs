@@ -7,5 +7,5 @@ public class ProjectLink
     public required string Url { get; set; }
 
     public Guid HomeProjectId { get; set; }
-    public HomeProject HomeProject { get; set; } = null!;
+    public required HomeProject HomeProject { get; set; }
 }

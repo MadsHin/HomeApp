@@ -5,5 +5,5 @@ public class Photo
     public Guid Id { get; set; }
 
     public Guid HomeProjectId { get; set; }
-    public HomeProject HomeProject { get; set; } = null!;
+    public required HomeProject HomeProject { get; set; }
 }
