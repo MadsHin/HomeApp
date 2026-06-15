@@ -2,11 +2,12 @@ using HomeApp.Infrastructure;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using HomeApp.Web.Data;
-using Microsoft.EntityFrameworkCore.Design;
+using HomeApp.Application;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.AddApplication();
 
 // Add services to the container.
 builder.Services.AddRazorPages();
