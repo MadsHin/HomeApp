@@ -1,0 +1,34 @@
+@inject ISender Sender
+
+<MudDialog>
+    <DialogContent>
+        <MudForm @ref="form">
+            <MudTextField @bind-Value="label" Label="Label" Required="true" Class="mb-4" />
+            <MudTextField @bind-Value="url" Label="URL" Required="true" Class="mb-4" />
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Submit">Add</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = null!;
+    [Parameter] public Guid ProjectId { get; set; }
+
+    private MudForm form = null!;
+    private string label = string.Empty;
+    private string url = string.Empty;
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private async Task Submit()
+    {
+        await form.ValidateAsync();
+        if (!form.IsValid) return;
+
+        await Sender.Send(new AddProjectLinkCommand(ProjectId, label, url));
+        MudDialog.Close(DialogResult.Ok(true));
+    }
+}

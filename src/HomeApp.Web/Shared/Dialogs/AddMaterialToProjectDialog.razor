@@ -1,0 +1,45 @@
+@inject ISender Sender
+
+<MudDialog>
+    <DialogContent>
+        <MudForm @ref="form">
+            <MudSelect T="Guid" @bind-Value="selectedMaterialId" Label="Material" Required="true" Class="mb-4">
+                @foreach (MaterialDto m in materials)
+                {
+                    <MudSelectItem Value="m.Id">@m.Name</MudSelectItem>
+                }
+            </MudSelect>
+            <MudTextField @bind-Value="quantity" Label="Quantity" Class="mb-4" />
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Submit">Add</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = null!;
+    [Parameter] public Guid ProjectId { get; set; }
+
+    private MudForm form = null!;
+    private Guid selectedMaterialId;
+    private string? quantity;
+    private List<MaterialDto> materials = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        materials = await Sender.Send(new GetMaterialsQuery());
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private async Task Submit()
+    {
+        await form.ValidateAsync();
+        if (!form.IsValid) return;
+
+        await Sender.Send(new AddMaterialToProjectCommand(ProjectId, selectedMaterialId, quantity));
+        MudDialog.Close(DialogResult.Ok(true));
+    }
+}

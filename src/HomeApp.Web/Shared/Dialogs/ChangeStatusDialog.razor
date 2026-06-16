@@ -1,0 +1,37 @@
+@inject ISender Sender
+
+<MudDialog>
+    <DialogContent>
+        <MudSelect T="ProjectStatus" @bind-Value="newStatus" Label="New Status" Class="mb-4">
+            @foreach (ProjectStatus s in Enum.GetValues<ProjectStatus>())
+            {
+                <MudSelectItem Value="s">@s</MudSelectItem>
+            }
+        </MudSelect>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Submit">Change</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = null!;
+    [Parameter] public Guid ProjectId { get; set; }
+    [Parameter] public ProjectStatus CurrentStatus { get; set; }
+
+    private ProjectStatus newStatus;
+
+    protected override void OnInitialized()
+    {
+        newStatus = CurrentStatus;
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private async Task Submit()
+    {
+        await Sender.Send(new ChangeProjectStatusCommand(ProjectId, newStatus));
+        MudDialog.Close(DialogResult.Ok(true));
+    }
+}

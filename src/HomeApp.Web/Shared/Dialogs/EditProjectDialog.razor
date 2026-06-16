@@ -1,0 +1,50 @@
+@inject ISender Sender
+
+<MudDialog>
+    <DialogContent>
+        <MudForm @ref="form">
+            <MudTextField @bind-Value="title" Label="Title" Required="true" Class="mb-4" />
+            <MudTextField @bind-Value="description" Label="Description" Lines="3" Class="mb-4" />
+            <MudNumericField T="decimal?" @bind-Value="budget" Label="Budget" Adornment="Adornment.Start" AdornmentText="kr" Class="mb-4" />
+            <MudDatePicker @bind-Date="startDateNullable" Label="Start Date" Class="mb-4" />
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Submit">Save</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = null!;
+    [Parameter] public HomeProjectDto Project { get; set; } = null!;
+
+    private MudForm form = null!;
+    private string title = string.Empty;
+    private string? description;
+    private decimal? budget;
+    private DateTime? startDateNullable;
+
+    protected override void OnInitialized()
+    {
+        title = Project.Title;
+        description = Project.Description;
+        budget = Project.Budget;
+        startDateNullable = Project.StartDate.HasValue ? Project.StartDate.Value.ToDateTime(TimeOnly.MinValue) : null;
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private async Task Submit()
+    {
+        await form.ValidateAsync();
+        if (!form.IsValid) return;
+
+        DateOnly? startDate = startDateNullable.HasValue
+            ? DateOnly.FromDateTime(startDateNullable.Value)
+            : null;
+
+        await Sender.Send(new UpdateHomeProjectCommand(Project.Id, title, description, budget, startDate));
+        MudDialog.Close(DialogResult.Ok(true));
+    }
+}

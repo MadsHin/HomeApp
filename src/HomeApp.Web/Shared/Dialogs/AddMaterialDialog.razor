@@ -1,0 +1,67 @@
+@inject ISender Sender
+@inject IDialogService DialogService
+
+<MudDialog>
+    <DialogContent>
+        <MudForm @ref="form">
+            <MudTextField @bind-Value="name" Label="Name" Required="true" Class="mb-4" />
+            <MudGrid>
+                <MudItem xs="8">
+                    <MudNumericField @bind-Value="quantity" Label="Quantity" Class="mb-4" />
+                </MudItem>
+                <MudItem xs="4">
+                    <MudTextField @bind-Value="unit" Label="Unit" Placeholder="pcs, L, m²…" Class="mb-4" />
+                </MudItem>
+            </MudGrid>
+            <MudTextField @bind-Value="location" Label="Storage location" Class="mb-4" />
+            <MudTextField @bind-Value="notes" Label="Notes" Lines="3" Class="mb-4" />
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                @if (icon is not null)
+                {
+                    <MudIcon Icon="@icon" Size="Size.Large" Color="Color.Primary" />
+                }
+                <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.EmojiSymbols"
+                           OnClick="PickIcon">
+                    @(icon is null ? "Pick icon" : "Change icon")
+                </MudButton>
+            </MudStack>
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Submit">Add</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = null!;
+
+    private MudForm form = null!;
+    private string name = string.Empty;
+    private decimal? quantity;
+    private string? unit;
+    private string? location;
+    private string? notes;
+    private string? icon;
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private async Task PickIcon()
+    {
+        DialogParameters<IconPickerDialog> parameters = new();
+        parameters.Add(x => x.CurrentIcon, icon);
+        IDialogReference d = await DialogService.ShowAsync<IconPickerDialog>("Pick an icon", parameters);
+        DialogResult? r = await d.Result;
+        if (r is { Canceled: false })
+            icon = r.Data as string;
+    }
+
+    private async Task Submit()
+    {
+        await form.ValidateAsync();
+        if (!form.IsValid) return;
+
+        await Sender.Send(new CreateMaterialCommand(name, quantity, unit, location, notes, icon));
+        MudDialog.Close(DialogResult.Ok(true));
+    }
+}

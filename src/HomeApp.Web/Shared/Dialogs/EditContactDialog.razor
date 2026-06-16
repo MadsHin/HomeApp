@@ -1,0 +1,40 @@
+@inject ISender Sender
+
+<MudDialog>
+    <DialogContent>
+        <MudForm @ref="form">
+            <MudTextField @bind-Value="name" Label="Name" Required="true" Class="mb-4" />
+            <MudTextField @bind-Value="phone" Label="Phone" Class="mb-4" />
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Submit">Save</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = null!;
+    [Parameter] public ContactDto Contact { get; set; } = null!;
+
+    private MudForm form = null!;
+    private string name = string.Empty;
+    private string? phone;
+
+    protected override void OnInitialized()
+    {
+        name = Contact.Name;
+        phone = Contact.Phone;
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private async Task Submit()
+    {
+        await form.ValidateAsync();
+        if (!form.IsValid) return;
+
+        await Sender.Send(new UpdateContactCommand(Contact.Id, name, phone));
+        MudDialog.Close(DialogResult.Ok(true));
+    }
+}

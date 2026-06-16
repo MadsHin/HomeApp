@@ -1,0 +1,45 @@
+@inject ISender Sender
+
+<MudDialog>
+    <DialogContent>
+        <MudForm @ref="form">
+            <MudSelect T="Guid" @bind-Value="selectedContactId" Label="Contact" Required="true" Class="mb-4">
+                @foreach (ContactDto c in contacts)
+                {
+                    <MudSelectItem Value="c.Id">@c.Name</MudSelectItem>
+                }
+            </MudSelect>
+            <MudTextField @bind-Value="role" Label="Role" Class="mb-4" />
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Submit">Add</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = null!;
+    [Parameter] public Guid ProjectId { get; set; }
+
+    private MudForm form = null!;
+    private Guid selectedContactId;
+    private string? role;
+    private List<ContactDto> contacts = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        contacts = await Sender.Send(new GetContactsQuery());
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private async Task Submit()
+    {
+        await form.ValidateAsync();
+        if (!form.IsValid) return;
+
+        await Sender.Send(new AddContactToProjectCommand(ProjectId, selectedContactId, role));
+        MudDialog.Close(DialogResult.Ok(true));
+    }
+}

@@ -1,0 +1,138 @@
+@page "/home-projects/{Id:guid}"
+@inject ISender Sender
+@inject IDialogService DialogService
+
+@if (project is null)
+{
+    <MudProgressCircular Indeterminate="true" />
+}
+else
+{
+    <MudText Typo="Typo.h4" Class="mb-2">@project.Title</MudText>
+    <MudChip T="string" Color="@StatusColor(project.Status)" Class="mb-2">@project.Status</MudChip>
+
+    @if (!string.IsNullOrWhiteSpace(project.Description))
+    {
+        <MudText Class="mb-2">@project.Description</MudText>
+    }
+
+    <MudGrid Class="mb-4">
+        <MudItem xs="6">
+            <MudText><strong>Budget:</strong> @(project.Budget.HasValue ? $"{project.Budget.Value:N0} kr" : "—")</MudText>
+        </MudItem>
+        <MudItem xs="6">
+            <MudText><strong>Start Date:</strong> @(project.StartDate.HasValue ? project.StartDate.Value.ToString("yyyy-MM-dd") : "—")</MudText>
+        </MudItem>
+        @if (project.CompletedDate.HasValue)
+        {
+            <MudItem xs="6">
+                <MudText><strong>Completed:</strong> @project.CompletedDate.Value.ToString("yyyy-MM-dd")</MudText>
+            </MudItem>
+        }
+    </MudGrid>
+
+    <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-4">
+        <MudTabPanel Text="Materials" Icon="@Icons.Material.Filled.Inventory">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add"
+                       OnClick="OpenAddMaterialDialog" Class="mb-4">
+                Add Material
+            </MudButton>
+            @* TODO: implement detail queries for child collections *@
+            <MudText Color="Color.Secondary">Detail queries for child collections coming soon.</MudText>
+        </MudTabPanel>
+
+        <MudTabPanel Text="Progress" Icon="@Icons.Material.Filled.TrendingUp">
+            <MudText Typo="Typo.h6" Class="mb-2">Add Progress Entry</MudText>
+            <MudGrid>
+                <MudItem xs="12" sm="4">
+                    <MudDatePicker @bind-Date="progressDate" Label="Date" Class="mb-2" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudTextField @bind-Value="progressNote" Label="Note" Class="mb-2" />
+                </MudItem>
+                <MudItem xs="12" sm="2" Class="d-flex align-end">
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="AddProgressEntry" Class="mb-2">
+                        Add
+                    </MudButton>
+                </MudItem>
+            </MudGrid>
+            @* TODO: implement detail queries for child collections *@
+            <MudText Color="Color.Secondary">Detail queries for child collections coming soon.</MudText>
+        </MudTabPanel>
+
+        <MudTabPanel Text="Links" Icon="@Icons.Material.Filled.Link">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add"
+                       OnClick="OpenAddLinkDialog" Class="mb-4">
+                Add Link
+            </MudButton>
+            @* TODO: implement detail queries for child collections *@
+            <MudText Color="Color.Secondary">Detail queries for child collections coming soon.</MudText>
+        </MudTabPanel>
+
+        <MudTabPanel Text="Contacts" Icon="@Icons.Material.Filled.Contacts">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add"
+                       OnClick="OpenAddContactDialog" Class="mb-4">
+                Add Contact
+            </MudButton>
+            @* TODO: implement detail queries for child collections *@
+            <MudText Color="Color.Secondary">Detail queries for child collections coming soon.</MudText>
+        </MudTabPanel>
+    </MudTabs>
+}
+
+@code {
+    [Parameter] public Guid Id { get; set; }
+
+    private HomeProjectDto? project;
+    private DateTime? progressDate = DateTime.Today;
+    private string progressNote = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Load();
+    }
+
+    private async Task Load()
+    {
+        project = await Sender.Send(new GetHomeProjectByIdQuery(Id));
+    }
+
+    private Color StatusColor(ProjectStatus status) => status switch
+    {
+        ProjectStatus.Planning => Color.Info,
+        ProjectStatus.InProgress => Color.Warning,
+        ProjectStatus.OnHold => Color.Default,
+        ProjectStatus.Completed => Color.Success,
+        ProjectStatus.Cancelled => Color.Error,
+        _ => Color.Default
+    };
+
+    private async Task OpenAddMaterialDialog()
+    {
+        DialogParameters<AddMaterialToProjectDialog> parameters = new();
+        parameters.Add(x => x.ProjectId, Id);
+        await DialogService.ShowAsync<AddMaterialToProjectDialog>("Add Material", parameters);
+    }
+
+    private async Task OpenAddLinkDialog()
+    {
+        DialogParameters<AddProjectLinkDialog> parameters = new();
+        parameters.Add(x => x.ProjectId, Id);
+        await DialogService.ShowAsync<AddProjectLinkDialog>("Add Link", parameters);
+    }
+
+    private async Task OpenAddContactDialog()
+    {
+        DialogParameters<AddContactToProjectDialog> parameters = new();
+        parameters.Add(x => x.ProjectId, Id);
+        await DialogService.ShowAsync<AddContactToProjectDialog>("Add Contact", parameters);
+    }
+
+    private async Task AddProgressEntry()
+    {
+        if (string.IsNullOrWhiteSpace(progressNote)) return;
+        DateOnly date = progressDate.HasValue ? DateOnly.FromDateTime(progressDate.Value) : DateOnly.FromDateTime(DateTime.Today);
+        await Sender.Send(new AddProgressEntryCommand(Id, date, progressNote));
+        progressNote = string.Empty;
+    }
+}

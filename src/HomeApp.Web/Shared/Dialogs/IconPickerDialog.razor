@@ -1,0 +1,96 @@
+@using System.Reflection
+
+<MudDialog>
+    <DialogContent>
+        <MudTextField Value="@search" ValueChanged="@((string s) => OnSearch(s))"
+                      Label="Search icons" Placeholder="e.g. brick, paint, tool, home…"
+                      Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search"
+                      Immediate="true" DebounceInterval="150" Class="mb-3" />
+
+        @if (search.Length < 2)
+        {
+            <MudText Typo="Typo.body2" Color="Color.Secondary">Type at least 2 characters to search</MudText>
+        }
+        else if (filteredIcons.Count == 0)
+        {
+            <MudText Typo="Typo.body2" Color="Color.Secondary">No icons found for "@search"</MudText>
+        }
+        else
+        {
+            <div style="height:360px;overflow-y:auto">
+                <MudGrid Spacing="1">
+                    @foreach (IconEntry icon in filteredIcons)
+                    {
+                        bool isSelected = icon.Value == selected;
+                        <MudItem xs="2" Style="text-align:center">
+                            <MudTooltip Text="@icon.Name" Placement="Placement.Top">
+                                <MudIconButton Icon="@icon.Value"
+                                               Color="@(isSelected ? Color.Primary : Color.Default)"
+                                               Style="@(isSelected ? "background:var(--mud-palette-primary-lighten)" : string.Empty)"
+                                               OnClick="@(() => selected = icon.Value)" />
+                            </MudTooltip>
+                        </MudItem>
+                    }
+                </MudGrid>
+            </div>
+            <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-1">
+                Showing @filteredIcons.Count result@(filteredIcons.Count == 1 ? string.Empty : "s")
+                @(filteredIcons.Count == MaxResults ? $" (top {MaxResults})" : string.Empty)
+            </MudText>
+        }
+    </DialogContent>
+    <DialogActions>
+        @if (CurrentIcon is not null)
+        {
+            <MudButton Color="Color.Error" StartIcon="@Icons.Material.Filled.Clear" OnClick="ClearIcon">
+                Remove icon
+            </MudButton>
+        }
+        <MudSpacer />
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" Disabled="@(selected is null)" OnClick="Submit">Select</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = null!;
+    [Parameter] public string? CurrentIcon { get; set; }
+
+    private const int MaxResults = 60;
+
+    private string search = string.Empty;
+    private string? selected;
+    private List<IconEntry> filteredIcons = [];
+
+    private static readonly List<IconEntry> AllIcons =
+        typeof(Icons.Material.Filled)
+            .GetFields(BindingFlags.Public | BindingFlags.Static)
+            .Where(f => f.FieldType == typeof(string))
+            .Select(f => new IconEntry(f.Name, (string)f.GetValue(null)!))
+            .OrderBy(i => i.Name)
+            .ToList();
+
+    protected override void OnInitialized()
+    {
+        selected = CurrentIcon;
+    }
+
+    private void OnSearch(string value)
+    {
+        search = value;
+        filteredIcons = search.Length < 2
+            ? []
+            : AllIcons
+                .Where(i => i.Name.Contains(search, StringComparison.OrdinalIgnoreCase))
+                .Take(MaxResults)
+                .ToList();
+    }
+
+    private void ClearIcon() => MudDialog.Close(DialogResult.Ok<string?>(null));
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private void Submit() => MudDialog.Close(DialogResult.Ok(selected));
+
+    private record IconEntry(string Name, string Value);
+}

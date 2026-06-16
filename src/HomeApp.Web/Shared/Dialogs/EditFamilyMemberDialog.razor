@@ -1,0 +1,43 @@
+@inject ISender Sender
+
+<MudDialog>
+    <DialogContent>
+        <MudForm @ref="form">
+            <MudTextField @bind-Value="name" Label="Name" Required="true" Class="mb-4" />
+            <MudNumericField T="int" @bind-Value="age" Label="Age" Min="0" Max="150" Class="mb-4" />
+            <MudTextField @bind-Value="phoneNumber" Label="Phone Number" Class="mb-4" />
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Submit">Save</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = null!;
+    [Parameter] public FamilyMemberDto Member { get; set; } = null!;
+
+    private MudForm form = null!;
+    private string name = string.Empty;
+    private int age;
+    private string? phoneNumber;
+
+    protected override void OnInitialized()
+    {
+        name = Member.Name;
+        age = Member.Age;
+        phoneNumber = Member.PhoneNumber;
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private async Task Submit()
+    {
+        await form.ValidateAsync();
+        if (!form.IsValid) return;
+
+        await Sender.Send(new UpdateFamilyMemberCommand(Member.Id, name, age, phoneNumber));
+        MudDialog.Close(DialogResult.Ok(true));
+    }
+}

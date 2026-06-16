@@ -1,0 +1,105 @@
+@page "/household-tasks"
+@inject ISender Sender
+@inject IDialogService DialogService
+
+<MudText Typo="Typo.h4" Class="mb-4">Household Tasks</MudText>
+
+<MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="OpenAddDialog" Class="mb-4">
+    Add Task
+</MudButton>
+
+@if (tasks is null)
+{
+    <MudProgressCircular Indeterminate="true" />
+}
+else
+{
+    <MudTable T="HouseholdTaskDto" Items="tasks" Hover="true" Striped="true">
+        <HeaderContent>
+            <MudTh>Title</MudTh>
+            <MudTh>Due Date</MudTh>
+            <MudTh>Recurrence</MudTh>
+            <MudTh>Assigned To</MudTh>
+            <MudTh>Done</MudTh>
+            <MudTh>Actions</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd>@context.Title</MudTd>
+            <MudTd>@(context.DueDate.HasValue ? context.DueDate.Value.ToString("yyyy-MM-dd") : "—")</MudTd>
+            <MudTd>@context.Recurrence</MudTd>
+            <MudTd>@(context.AssignedMemberId.HasValue ? (memberNames.TryGetValue(context.AssignedMemberId.Value, out string? n) ? n : "Assigned") : "—")</MudTd>
+            <MudTd><MudCheckBox T="bool" Value="context.IsCompleted" Disabled="true" /></MudTd>
+            <MudTd>
+                @if (!context.IsCompleted)
+                {
+                    <MudIconButton Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" Title="Complete"
+                                   OnClick="@(() => CompleteTask(context.Id))" />
+                }
+                @if (context.IsCompleted)
+                {
+                    <MudIconButton Icon="@Icons.Material.Filled.Refresh" Color="Color.Default" Title="Reopen"
+                                   OnClick="@(() => ReopenTask(context.Id))" />
+                }
+                <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Title="Edit"
+                               OnClick="@(() => OpenEditDialog(context))" />
+                <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Title="Delete"
+                               OnClick="@(() => DeleteTask(context.Id))" />
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+}
+
+@code {
+    private List<HouseholdTaskDto>? tasks;
+    private Dictionary<Guid, string> memberNames = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Load();
+    }
+
+    private async Task Load()
+    {
+        List<FamilyMemberDto> members = await Sender.Send(new GetFamilyMembersQuery());
+        memberNames = members.ToDictionary(m => m.Id, m => m.Name);
+        tasks = await Sender.Send(new GetHouseholdTasksQuery());
+    }
+
+    private async Task OpenAddDialog()
+    {
+        IDialogReference d = await DialogService.ShowAsync<AddTaskDialog>("Add Task");
+        DialogResult? r = await d.Result;
+        if (r is { Canceled: false }) await Load();
+    }
+
+    private async Task OpenEditDialog(HouseholdTaskDto task)
+    {
+        DialogParameters<EditTaskDialog> parameters = new();
+        parameters.Add(x => x.Task, task);
+        IDialogReference d = await DialogService.ShowAsync<EditTaskDialog>("Edit Task", parameters);
+        DialogResult? r = await d.Result;
+        if (r is { Canceled: false }) await Load();
+    }
+
+    private async Task CompleteTask(Guid id)
+    {
+        await Sender.Send(new CompleteHouseholdTaskCommand(id));
+        await Load();
+    }
+
+    private async Task ReopenTask(Guid id)
+    {
+        await Sender.Send(new ReopenHouseholdTaskCommand(id));
+        await Load();
+    }
+
+    private async Task DeleteTask(Guid id)
+    {
+        bool? confirmed = await DialogService.ShowMessageBoxAsync("Delete Task", "Are you sure you want to delete this task?", yesText: "Delete", cancelText: "Cancel");
+        if (confirmed == true)
+        {
+            await Sender.Send(new DeleteHouseholdTaskCommand(id));
+            await Load();
+        }
+    }
+}
