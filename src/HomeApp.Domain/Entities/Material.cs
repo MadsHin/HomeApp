@@ -9,5 +9,7 @@ public class Material
     public string? Location { get; set; }
     public string? Notes { get; set; }
     public string? Icon { get; set; }
+    public int SortOrder { get; set; }
+    public DateTime CreatedAt { get; set; }
     public ICollection<HomeProjectMaterial> HomeProjects { get; set; } = [];
 }

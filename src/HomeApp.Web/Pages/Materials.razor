@@ -21,8 +21,14 @@ else
     <MudGrid>
         @foreach (MaterialDto m in materials)
         {
-            <MudItem xs="12" sm="6" md="4">
-                <MudCard Elevation="2">
+            <MudItem xs="12" sm="6" md="4"
+                     draggable="true"
+                     @ondragstart="@(() => dragging = m.Id)"
+                     @ondragend="@(() => { dragging = null; hovering = null; })"
+                     @ondragenter="@(() => hovering = m.Id)"
+                     @ondragover:preventDefault="true"
+                     @ondrop="@(() => Drop(m.Id))">
+                <MudCard Elevation="2" Style="@CardStyle(m.Id)">
                     <MudCardHeader>
                         <CardHeaderAvatar>
                             @if (m.Icon is not null)
@@ -75,15 +81,40 @@ else
 
 @code {
     private List<MaterialDto>? materials;
+    private Guid? dragging;
+    private Guid? hovering;
 
-    protected override async Task OnInitializedAsync()
-    {
-        await Load();
-    }
+    protected override async Task OnInitializedAsync() => await Load();
 
     private async Task Load()
     {
         materials = await Sender.Send(new GetMaterialsQuery());
+    }
+
+    private string CardStyle(Guid id)
+    {
+        if (id == dragging)  return "opacity:0.4;cursor:grabbing;transition:opacity 0.15s;";
+        if (id == hovering)  return "outline:2px dashed #6B2737;outline-offset:3px;cursor:grab;";
+        return "cursor:grab;";
+    }
+
+    private async Task Drop(Guid targetId)
+    {
+        if (dragging is null || dragging == targetId || materials is null) return;
+
+        MaterialDto? draggedItem = materials.FirstOrDefault(m => m.Id == dragging);
+        if (draggedItem is null) return;
+
+        int from = materials.IndexOf(draggedItem);
+        int to   = materials.IndexOf(materials.First(m => m.Id == targetId));
+
+        materials.RemoveAt(from);
+        materials.Insert(to, draggedItem);
+
+        dragging = null;
+        hovering = null;
+
+        await Sender.Send(new ReorderMaterialsCommand(materials.Select(m => m.Id).ToList()));
     }
 
     private async Task Adjust(MaterialDto material, decimal delta)

@@ -9,6 +9,8 @@ public class GetMaterialsHandler(IAppDbContext dbContext) : IRequestHandler<GetM
     public async Task<List<MaterialDto>> Handle(GetMaterialsQuery request, CancellationToken cancellationToken)
     {
         return await dbContext.Materials
+            .OrderBy(m => m.SortOrder)
+            .ThenByDescending(m => m.CreatedAt)
             .Select(m => new MaterialDto(m.Id, m.Name, m.Quantity, m.Unit, m.Location, m.Notes, m.Icon))
             .ToListAsync(cancellationToken);
     }
