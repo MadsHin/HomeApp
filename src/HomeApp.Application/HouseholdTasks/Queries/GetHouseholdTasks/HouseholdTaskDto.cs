@@ -1,12 +1,13 @@
 using HomeApp.Domain.Enums;
-using MediatR;
 
-namespace HomeApp.Application.HouseholdTasks.Commands;
+namespace HomeApp.Application.HouseholdTasks.Queries;
 
-public record CreateHouseholdTaskCommand(
+public record HouseholdTaskDto(
+    Guid Id,
     string Title,
     string? Description,
     DateOnly? DueDate,
+    bool IsCompleted,
     Recurrence Recurrence,
     Guid? AssignedMemberId
-) : IRequest<Guid>;
+);

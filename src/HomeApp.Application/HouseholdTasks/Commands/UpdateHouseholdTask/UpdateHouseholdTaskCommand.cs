@@ -3,10 +3,11 @@ using MediatR;
 
 namespace HomeApp.Application.HouseholdTasks.Commands;
 
-public record CreateHouseholdTaskCommand(
+public record UpdateHouseholdTaskCommand(
+    Guid Id,
     string Title,
     string? Description,
     DateOnly? DueDate,
     Recurrence Recurrence,
     Guid? AssignedMemberId
-) : IRequest<Guid>;
+) : IRequest;
