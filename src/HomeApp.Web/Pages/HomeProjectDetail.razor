@@ -8,33 +8,56 @@
 }
 else
 {
-    <MudText Typo="Typo.h4" Class="mb-2">@project.Title</MudText>
-    <MudChip T="string" Color="@StatusColor(project.Status)" Class="mb-2">@project.Status</MudChip>
+    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="3" Class="mb-2">
+        <MudText Typo="Typo.h4">@project.Title</MudText>
+        <MudChip T="string" Color="@StatusColor(project.Status)" Size="Size.Small">@project.Status</MudChip>
+    </MudStack>
 
     @if (!string.IsNullOrWhiteSpace(project.Description))
     {
-        <MudText Class="mb-2">@project.Description</MudText>
+        <MudPaper Elevation="1" Class="pa-4 mb-5">
+            <MudText Typo="Typo.body1">@project.Description</MudText>
+        </MudPaper>
     }
 
-    <MudGrid Class="mb-4">
-        <MudItem xs="6">
-            <MudText><strong>Budget:</strong> @(project.Budget.HasValue ? $"{project.Budget.Value:N0} kr" : "—")</MudText>
-        </MudItem>
-        <MudItem xs="6">
-            <MudText><strong>Start Date:</strong> @(project.StartDate.HasValue ? project.StartDate.Value.ToString("yyyy-MM-dd") : "—")</MudText>
-        </MudItem>
+    <MudStack Row="true" Spacing="6" Wrap="Wrap.Wrap" Class="mb-6">
+        @if (project.Budget.HasValue)
+        {
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                <MudIcon Icon="@Icons.Material.Filled.Payments" Color="Color.Secondary" />
+                <div>
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">Budget</MudText>
+                    <MudText Typo="Typo.body1">@($"{project.Budget.Value:N0} kr")</MudText>
+                </div>
+            </MudStack>
+        }
+        @if (project.StartDate.HasValue)
+        {
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                <MudIcon Icon="@Icons.Material.Filled.CalendarToday" Color="Color.Secondary" />
+                <div>
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">Started</MudText>
+                    <MudText Typo="Typo.body1">@project.StartDate.Value.ToString("dd MMM yyyy")</MudText>
+                </div>
+            </MudStack>
+        }
         @if (project.CompletedDate.HasValue)
         {
-            <MudItem xs="6">
-                <MudText><strong>Completed:</strong> @project.CompletedDate.Value.ToString("yyyy-MM-dd")</MudText>
-            </MudItem>
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" />
+                <div>
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">Completed</MudText>
+                    <MudText Typo="Typo.body1">@project.CompletedDate.Value.ToString("dd MMM yyyy")</MudText>
+                </div>
+            </MudStack>
         }
-    </MudGrid>
+    </MudStack>
 
-    <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-4">
+    <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" PanelClass="px-6 pt-6 pb-6">
+
         <MudTabPanel Text="Materials" Icon="@Icons.Material.Filled.Inventory">
             <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add"
-                       OnClick="OpenAddMaterialDialog" Class="mb-4">
+                       OnClick="OpenAddMaterialDialog" Class="mb-5">
                 Add Material
             </MudButton>
 
@@ -97,41 +120,129 @@ else
         </MudTabPanel>
 
         <MudTabPanel Text="Progress" Icon="@Icons.Material.Filled.TrendingUp">
-            <MudText Typo="Typo.h6" Class="mb-2">Add Progress Entry</MudText>
-            <MudGrid>
-                <MudItem xs="12" sm="4">
-                    <MudDatePicker @bind-Date="progressDate" Label="Date" Class="mb-2" />
-                </MudItem>
-                <MudItem xs="12" sm="6">
-                    <MudTextField @bind-Value="progressNote" Label="Note" Class="mb-2" />
-                </MudItem>
-                <MudItem xs="12" sm="2" Class="d-flex align-end">
-                    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="AddProgressEntry" Class="mb-2">
-                        Add
-                    </MudButton>
-                </MudItem>
-            </MudGrid>
-            @* TODO: implement detail queries for child collections *@
-            <MudText Color="Color.Secondary">Detail queries for child collections coming soon.</MudText>
+            <MudPaper Elevation="1" Class="pa-4 mb-6">
+                <MudText Typo="Typo.subtitle1" Class="mb-3">Log progress</MudText>
+                <MudGrid>
+                    <MudItem xs="12" sm="4">
+                        <MudDatePicker @bind-Date="progressDate" Label="Date" />
+                    </MudItem>
+                    <MudItem xs="12" sm="6">
+                        <MudTextField @bind-Value="progressNote" Label="Note" />
+                    </MudItem>
+                    <MudItem xs="12" sm="2" Class="d-flex align-end">
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="AddProgressEntry">
+                            Add
+                        </MudButton>
+                    </MudItem>
+                </MudGrid>
+            </MudPaper>
+
+            @if (progressEntries.Count == 0)
+            {
+                <MudText Color="Color.Secondary">No progress logged yet.</MudText>
+            }
+            else
+            {
+                @foreach (ProgressEntryDto entry in progressEntries)
+                {
+                    <MudStack Row="true" AlignItems="AlignItems.Start" Spacing="3" Class="mb-3">
+                        <MudIcon Icon="@Icons.Material.Filled.FiberManualRecord"
+                                 Size="Size.Small" Color="Color.Primary" Style="margin-top:4px" />
+                        <div style="flex:1">
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                @entry.Date.ToString("dd MMM yyyy")
+                            </MudText>
+                            <MudText>@entry.Note</MudText>
+                        </div>
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
+                                       Color="Color.Error"
+                                       OnClick="@(() => DeleteProgressEntry(entry.Id))" />
+                    </MudStack>
+                    <MudDivider Class="mb-3" />
+                }
+            }
         </MudTabPanel>
 
         <MudTabPanel Text="Links" Icon="@Icons.Material.Filled.Link">
             <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add"
-                       OnClick="OpenAddLinkDialog" Class="mb-4">
+                       OnClick="OpenAddLinkDialog" Class="mb-5">
                 Add Link
             </MudButton>
-            @* TODO: implement detail queries for child collections *@
-            <MudText Color="Color.Secondary">Detail queries for child collections coming soon.</MudText>
+
+            @if (projectLinks.Count == 0)
+            {
+                <MudText Color="Color.Secondary">No links added yet.</MudText>
+            }
+            else
+            {
+                @foreach (ProjectLinkDto link in projectLinks)
+                {
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="3" Class="mb-3">
+                        <MudIcon Icon="@Icons.Material.Filled.OpenInNew" Color="Color.Primary" />
+                        <div style="flex:1">
+                            <MudLink Href="@link.Url" Target="_blank" Typo="Typo.body1">@link.Label</MudLink>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">@link.Url</MudText>
+                        </div>
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
+                                       Color="Color.Error"
+                                       OnClick="@(() => DeleteLink(link.Id))" />
+                    </MudStack>
+                    <MudDivider Class="mb-3" />
+                }
+            }
         </MudTabPanel>
 
         <MudTabPanel Text="Contacts" Icon="@Icons.Material.Filled.Contacts">
             <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add"
-                       OnClick="OpenAddContactDialog" Class="mb-4">
+                       OnClick="OpenAddContactDialog" Class="mb-5">
                 Add Contact
             </MudButton>
-            @* TODO: implement detail queries for child collections *@
-            <MudText Color="Color.Secondary">Detail queries for child collections coming soon.</MudText>
+
+            @if (projectContacts.Count == 0)
+            {
+                <MudText Color="Color.Secondary">No contacts added yet.</MudText>
+            }
+            else
+            {
+                <MudGrid>
+                    @foreach (ProjectContactDto contact in projectContacts)
+                    {
+                        <MudItem xs="12" sm="6" md="4">
+                            <MudCard Elevation="1">
+                                <MudCardContent>
+                                    <MudStack Row="true" AlignItems="AlignItems.Start"
+                                              Justify="Justify.SpaceBetween">
+                                        <div>
+                                            <MudText Typo="Typo.subtitle1">@contact.Name</MudText>
+                                            @if (contact.Role is not null)
+                                            {
+                                                <MudChip T="string" Size="Size.Small" Color="Color.Default"
+                                                         Class="ml-0 mt-1">
+                                                    @contact.Role
+                                                </MudChip>
+                                            }
+                                            @if (contact.Phone is not null)
+                                            {
+                                                <MudStack Row="true" AlignItems="AlignItems.Center"
+                                                          Spacing="1" Class="mt-2">
+                                                    <MudIcon Icon="@Icons.Material.Filled.Phone"
+                                                             Size="Size.Small" Color="Color.Secondary" />
+                                                    <MudText Typo="Typo.body2">@contact.Phone</MudText>
+                                                </MudStack>
+                                            }
+                                        </div>
+                                        <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                                       Size="Size.Small" Color="Color.Error"
+                                                       OnClick="@(() => RemoveContact(contact.ContactId))" />
+                                    </MudStack>
+                                </MudCardContent>
+                            </MudCard>
+                        </MudItem>
+                    }
+                </MudGrid>
+            }
         </MudTabPanel>
+
     </MudTabs>
 }
 
@@ -140,34 +251,38 @@ else
 
     private HomeProjectDto? project;
     private List<ProjectMaterialDto> projectMaterials = [];
+    private List<ProgressEntryDto> progressEntries = [];
+    private List<ProjectLinkDto> projectLinks = [];
+    private List<ProjectContactDto> projectContacts = [];
+
     private DateTime? progressDate = DateTime.Today;
     private string progressNote = string.Empty;
 
-    protected override async Task OnInitializedAsync()
-    {
-        await Load();
-    }
+    protected override async Task OnInitializedAsync() => await Load();
 
     private async Task Load()
     {
         project = await Sender.Send(new GetHomeProjectByIdQuery(Id));
         projectMaterials = await Sender.Send(new GetProjectMaterialsQuery(Id));
+        progressEntries = await Sender.Send(new GetProjectProgressEntriesQuery(Id));
+        projectLinks = await Sender.Send(new GetProjectLinksQuery(Id));
+        projectContacts = await Sender.Send(new GetProjectContactsQuery(Id));
     }
 
     private Color StatusColor(ProjectStatus status) => status switch
     {
-        ProjectStatus.Planning => Color.Info,
-        ProjectStatus.InProgress => Color.Warning,
-        ProjectStatus.OnHold => Color.Default,
-        ProjectStatus.Completed => Color.Success,
-        ProjectStatus.Cancelled => Color.Error,
-        _ => Color.Default
+        ProjectStatus.Planning    => Color.Info,
+        ProjectStatus.InProgress  => Color.Warning,
+        ProjectStatus.OnHold      => Color.Default,
+        ProjectStatus.Completed   => Color.Success,
+        ProjectStatus.Cancelled   => Color.Error,
+        _                         => Color.Default
     };
 
     private (string Label, Color Color) StockCoverage(ProjectMaterialDto m)
     {
-        if (m.QuantityNeeded is null) return ("No estimate", Color.Default);
-        if (m.QuantityInStock is null) return ("Stock unknown", Color.Warning);
+        if (m.QuantityNeeded is null)    return ("No estimate",    Color.Default);
+        if (m.QuantityInStock is null)   return ("Stock unknown",  Color.Warning);
         if (m.QuantityInStock >= m.QuantityNeeded) return ("Covered", Color.Success);
         if (m.QuantityInStock > 0)
             return ($"{m.QuantityInStock:G29} of {m.QuantityNeeded:G29}", Color.Warning);
@@ -189,25 +304,50 @@ else
         await Load();
     }
 
+    private async Task AddProgressEntry()
+    {
+        if (string.IsNullOrWhiteSpace(progressNote)) return;
+        DateOnly date = progressDate.HasValue
+            ? DateOnly.FromDateTime(progressDate.Value)
+            : DateOnly.FromDateTime(DateTime.Today);
+        await Sender.Send(new AddProgressEntryCommand(Id, date, progressNote));
+        progressNote = string.Empty;
+        await Load();
+    }
+
+    private async Task DeleteProgressEntry(Guid entryId)
+    {
+        await Sender.Send(new DeleteProgressEntryCommand(entryId));
+        await Load();
+    }
+
     private async Task OpenAddLinkDialog()
     {
         DialogParameters<AddProjectLinkDialog> parameters = new();
         parameters.Add(x => x.ProjectId, Id);
-        await DialogService.ShowAsync<AddProjectLinkDialog>("Add Link", parameters);
+        IDialogReference d = await DialogService.ShowAsync<AddProjectLinkDialog>("Add Link", parameters);
+        DialogResult? r = await d.Result;
+        if (r is { Canceled: false }) await Load();
+    }
+
+    private async Task DeleteLink(Guid linkId)
+    {
+        await Sender.Send(new RemoveProjectLinkCommand(linkId));
+        await Load();
     }
 
     private async Task OpenAddContactDialog()
     {
         DialogParameters<AddContactToProjectDialog> parameters = new();
         parameters.Add(x => x.ProjectId, Id);
-        await DialogService.ShowAsync<AddContactToProjectDialog>("Add Contact", parameters);
+        IDialogReference d = await DialogService.ShowAsync<AddContactToProjectDialog>("Add Contact", parameters);
+        DialogResult? r = await d.Result;
+        if (r is { Canceled: false }) await Load();
     }
 
-    private async Task AddProgressEntry()
+    private async Task RemoveContact(Guid contactId)
     {
-        if (string.IsNullOrWhiteSpace(progressNote)) return;
-        DateOnly date = progressDate.HasValue ? DateOnly.FromDateTime(progressDate.Value) : DateOnly.FromDateTime(DateTime.Today);
-        await Sender.Send(new AddProgressEntryCommand(Id, date, progressNote));
-        progressNote = string.Empty;
+        await Sender.Send(new RemoveContactFromProjectCommand(Id, contactId));
+        await Load();
     }
 }
