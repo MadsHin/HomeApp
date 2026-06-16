@@ -1,6 +1,6 @@
 @inherits LayoutComponentBase
 
-<MudThemeProvider />
+<MudThemeProvider Theme="@theme" />
 <MudPopoverProvider />
 <MudDialogProvider />
 <MudSnackbarProvider />
@@ -27,6 +27,27 @@
 
 @code {
     private bool drawerOpen = true;
+
+    private MudTheme theme = new()
+    {
+        PaletteLight = new PaletteLight
+        {
+            Primary = "#6B2737",
+            PrimaryContrastText = "#FDFAF6",
+            Secondary = "#B8860B",
+            SecondaryContrastText = "#FDFAF6",
+            Background = "#FAF6F0",
+            Surface = "#FFFFFF",
+            AppbarBackground = "#6B2737",
+            AppbarText = "#FDFAF6",
+            DrawerBackground = "#F5EDE3",
+            DrawerText = "#3D1F26",
+            DrawerIcon = "#6B2737",
+            TextPrimary = "#2C1518",
+            TextSecondary = "#7A5560",
+            ActionDefault = "#9E6470",
+        }
+    };
 
     private void ToggleDrawer()
     {
