@@ -37,8 +37,63 @@ else
                        OnClick="OpenAddMaterialDialog" Class="mb-4">
                 Add Material
             </MudButton>
-            @* TODO: implement detail queries for child collections *@
-            <MudText Color="Color.Secondary">Detail queries for child collections coming soon.</MudText>
+
+            @if (projectMaterials.Count == 0)
+            {
+                <MudText Color="Color.Secondary">No materials added yet.</MudText>
+            }
+            else
+            {
+                <MudTable T="ProjectMaterialDto" Items="projectMaterials" Hover="true" Elevation="0">
+                    <HeaderContent>
+                        <MudTh>Material</MudTh>
+                        <MudTh Style="text-align:right">Needed</MudTh>
+                        <MudTh Style="text-align:right">In stock</MudTh>
+                        <MudTh Style="text-align:center">Coverage</MudTh>
+                        <MudTh />
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd>
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                                @if (context.Icon is not null)
+                                {
+                                    <MudIcon Icon="@context.Icon" Size="Size.Small" Color="Color.Primary" />
+                                }
+                                <MudText>@context.Name</MudText>
+                            </MudStack>
+                        </MudTd>
+                        <MudTd Style="text-align:right">
+                            @if (context.QuantityNeeded.HasValue)
+                            {
+                                <MudText>@context.QuantityNeeded.Value.ToString("G29") @context.Unit</MudText>
+                            }
+                            else
+                            {
+                                <MudText Color="Color.Secondary">—</MudText>
+                            }
+                        </MudTd>
+                        <MudTd Style="text-align:right">
+                            @if (context.QuantityInStock.HasValue)
+                            {
+                                <MudText>@context.QuantityInStock.Value.ToString("G29") @context.Unit</MudText>
+                            }
+                            else
+                            {
+                                <MudText Color="Color.Secondary">—</MudText>
+                            }
+                        </MudTd>
+                        <MudTd Style="text-align:center">
+                            @{ (string label, Color color) = StockCoverage(context); }
+                            <MudChip T="string" Size="Size.Small" Color="@color">@label</MudChip>
+                        </MudTd>
+                        <MudTd>
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
+                                           Color="Color.Error"
+                                           OnClick="@(() => RemoveMaterial(context.MaterialId))" />
+                        </MudTd>
+                    </RowTemplate>
+                </MudTable>
+            }
         </MudTabPanel>
 
         <MudTabPanel Text="Progress" Icon="@Icons.Material.Filled.TrendingUp">
@@ -84,6 +139,7 @@ else
     [Parameter] public Guid Id { get; set; }
 
     private HomeProjectDto? project;
+    private List<ProjectMaterialDto> projectMaterials = [];
     private DateTime? progressDate = DateTime.Today;
     private string progressNote = string.Empty;
 
@@ -95,6 +151,7 @@ else
     private async Task Load()
     {
         project = await Sender.Send(new GetHomeProjectByIdQuery(Id));
+        projectMaterials = await Sender.Send(new GetProjectMaterialsQuery(Id));
     }
 
     private Color StatusColor(ProjectStatus status) => status switch
@@ -107,11 +164,29 @@ else
         _ => Color.Default
     };
 
+    private (string Label, Color Color) StockCoverage(ProjectMaterialDto m)
+    {
+        if (m.QuantityNeeded is null) return ("No estimate", Color.Default);
+        if (m.QuantityInStock is null) return ("Stock unknown", Color.Warning);
+        if (m.QuantityInStock >= m.QuantityNeeded) return ("Covered", Color.Success);
+        if (m.QuantityInStock > 0)
+            return ($"{m.QuantityInStock:G29} of {m.QuantityNeeded:G29}", Color.Warning);
+        return ("None in stock", Color.Error);
+    }
+
     private async Task OpenAddMaterialDialog()
     {
         DialogParameters<AddMaterialToProjectDialog> parameters = new();
         parameters.Add(x => x.ProjectId, Id);
-        await DialogService.ShowAsync<AddMaterialToProjectDialog>("Add Material", parameters);
+        IDialogReference d = await DialogService.ShowAsync<AddMaterialToProjectDialog>("Add Material", parameters);
+        DialogResult? r = await d.Result;
+        if (r is { Canceled: false }) await Load();
+    }
+
+    private async Task RemoveMaterial(Guid materialId)
+    {
+        await Sender.Send(new RemoveMaterialFromProjectCommand(Id, materialId));
+        await Load();
     }
 
     private async Task OpenAddLinkDialog()
