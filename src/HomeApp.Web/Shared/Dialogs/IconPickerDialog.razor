@@ -3,7 +3,7 @@
 <MudDialog>
     <DialogContent>
         <MudTextField Value="@search" ValueChanged="@((string s) => OnSearch(s))"
-                      Label="Search icons" Placeholder="e.g. brick, paint, tool, home…"
+                      Label="Search icons" Placeholder="e.g. construction, home, tool, paint…"
                       Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search"
                       Immediate="true" DebounceInterval="150" Class="mb-3" />
 
@@ -19,22 +19,23 @@
         {
             <div style="height:360px;overflow-y:auto">
                 <MudGrid Spacing="1">
-                    @foreach (IconEntry icon in filteredIcons)
+                    @foreach ((string name, string value) in filteredIcons)
                     {
-                        bool isSelected = icon.Value == selected;
+                        bool isSelected = name == selectedName;
                         <MudItem xs="2" Style="text-align:center">
-                            <MudTooltip Text="@icon.Name" Placement="Placement.Top">
-                                <MudIconButton Icon="@icon.Value"
-                                               Color="@(isSelected ? Color.Primary : Color.Default)"
-                                               Style="@(isSelected ? "background:var(--mud-palette-primary-lighten)" : string.Empty)"
-                                               OnClick="@(() => selected = icon.Value)" />
+                            <MudTooltip Text="@name" Placement="Placement.Top">
+                                <div style="@(isSelected ? "border-radius:8px;background:rgba(107,39,55,0.12)" : string.Empty)">
+                                    <MudIconButton Icon="@value"
+                                                   Color="@(isSelected ? Color.Primary : Color.Default)"
+                                                   OnClick="@(() => selectedName = name)" />
+                                </div>
                             </MudTooltip>
                         </MudItem>
                     }
                 </MudGrid>
             </div>
             <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-1">
-                Showing @filteredIcons.Count result@(filteredIcons.Count == 1 ? string.Empty : "s")
+                @filteredIcons.Count result@(filteredIcons.Count == 1 ? string.Empty : "s")
                 @(filteredIcons.Count == MaxResults ? $" (top {MaxResults})" : string.Empty)
             </MudText>
         }
@@ -48,7 +49,7 @@
         }
         <MudSpacer />
         <MudButton OnClick="Cancel">Cancel</MudButton>
-        <MudButton Color="Color.Primary" Disabled="@(selected is null)" OnClick="Submit">Select</MudButton>
+        <MudButton Color="Color.Primary" Disabled="@(selectedName is null)" OnClick="Submit">Select</MudButton>
     </DialogActions>
 </MudDialog>
 
@@ -59,20 +60,26 @@
     private const int MaxResults = 60;
 
     private string search = string.Empty;
-    private string? selected;
-    private List<IconEntry> filteredIcons = [];
+    private string? selectedName;
+    private List<(string Name, string Value)> filteredIcons = [];
 
-    private static readonly List<IconEntry> AllIcons =
+    private static readonly List<(string Name, string Value)> AllIcons =
         typeof(Icons.Material.Filled)
             .GetFields(BindingFlags.Public | BindingFlags.Static)
             .Where(f => f.FieldType == typeof(string))
-            .Select(f => new IconEntry(f.Name, (string)f.GetValue(null)!))
+            .Select(f => (Name: f.Name, Value: (string)f.GetValue(null)!))
             .OrderBy(i => i.Name)
             .ToList();
 
+    private static readonly Dictionary<string, string> ValueToName =
+        AllIcons
+            .GroupBy(i => i.Value)
+            .ToDictionary(g => g.Key, g => g.First().Name);
+
     protected override void OnInitialized()
     {
-        selected = CurrentIcon;
+        if (CurrentIcon is not null)
+            ValueToName.TryGetValue(CurrentIcon, out selectedName);
     }
 
     private void OnSearch(string value)
@@ -87,10 +94,8 @@
     }
 
     private void ClearIcon() => MudDialog.Close(DialogResult.Ok<string?>(null));
-
     private void Cancel() => MudDialog.Cancel();
-
-    private void Submit() => MudDialog.Close(DialogResult.Ok(selected));
-
-    private record IconEntry(string Name, string Value);
+    private void Submit() => MudDialog.Close(
+        DialogResult.Ok(filteredIcons.FirstOrDefault(i => i.Name == selectedName).Value
+                        ?? AllIcons.FirstOrDefault(i => i.Name == selectedName).Value));
 }
