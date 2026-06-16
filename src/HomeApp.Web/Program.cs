@@ -1,8 +1,6 @@
-using HomeApp.Infrastructure;
-using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Web;
-using HomeApp.Web.Data;
 using HomeApp.Application;
+using HomeApp.Infrastructure;
+using MudBlazor.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,7 +10,7 @@ builder.Services.AddApplication();
 // Add services to the container.
 builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
-builder.Services.AddSingleton<WeatherForecastService>();
+builder.Services.AddMudServices();
 
 var app = builder.Build();
 
