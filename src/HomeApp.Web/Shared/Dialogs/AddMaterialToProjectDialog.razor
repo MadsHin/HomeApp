@@ -3,11 +3,11 @@
 <MudDialog>
     <DialogContent>
         <MudForm @ref="form">
-            <MudSelect T="Guid" Value="selectedMaterialId" ValueChanged="OnMaterialSelected"
+            <MudSelect T="Guid?" Value="selectedMaterialId" ValueChanged="OnMaterialSelected"
                        Label="Material" Required="true" Class="mb-2">
                 @foreach (MaterialDto m in materials)
                 {
-                    <MudSelectItem Value="m.Id">
+                    <MudSelectItem Value="@((Guid?)m.Id)">
                         @if (m.Icon is not null)
                         {
                             <MudIcon Icon="@m.Icon" Size="Size.Small" Class="mr-1" />
@@ -48,7 +48,7 @@
     [Parameter] public Guid ProjectId { get; set; }
 
     private MudForm form = null!;
-    private Guid selectedMaterialId;
+    private Guid? selectedMaterialId;
     private decimal? quantityNeeded;
     private List<MaterialDto> materials = [];
     private MaterialDto? selectedMaterial;
@@ -58,10 +58,10 @@
         materials = await Sender.Send(new GetMaterialsQuery());
     }
 
-    private void OnMaterialSelected(Guid id)
+    private void OnMaterialSelected(Guid? id)
     {
         selectedMaterialId = id;
-        selectedMaterial = materials.FirstOrDefault(m => m.Id == id);
+        selectedMaterial = id.HasValue ? materials.FirstOrDefault(m => m.Id == id.Value) : null;
     }
 
     private void Cancel() => MudDialog.Cancel();
@@ -69,9 +69,9 @@
     private async Task Submit()
     {
         await form.ValidateAsync();
-        if (!form.IsValid) return;
+        if (!form.IsValid || selectedMaterialId is null) return;
 
-        await Sender.Send(new AddMaterialToProjectCommand(ProjectId, selectedMaterialId, quantityNeeded));
+        await Sender.Send(new AddMaterialToProjectCommand(ProjectId, selectedMaterialId.Value, quantityNeeded));
         MudDialog.Close(DialogResult.Ok(true));
     }
 }

@@ -8,9 +8,15 @@
 }
 else
 {
-    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="3" Class="mb-2">
-        <MudText Typo="Typo.h4">@project.Title</MudText>
-        <MudChip T="string" Color="@StatusColor(project.Status)" Size="Size.Small">@project.Status</MudChip>
+    <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-2">
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="3">
+            <MudText Typo="Typo.h4">@project.Title</MudText>
+            <MudChip T="string" Color="@StatusColor(project.Status)" Size="Size.Small">@project.Status</MudChip>
+        </MudStack>
+        <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.SwapHoriz"
+                   OnClick="OpenChangeStatusDialog">
+            Change status
+        </MudButton>
     </MudStack>
 
     @if (!string.IsNullOrWhiteSpace(project.Description))
@@ -36,7 +42,9 @@ else
             <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
                 <MudIcon Icon="@Icons.Material.Filled.CalendarToday" Color="Color.Secondary" />
                 <div>
-                    <MudText Typo="Typo.caption" Color="Color.Secondary">Started</MudText>
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">
+                        @(project.StartDate.Value > DateOnly.FromDateTime(DateTime.Today) ? "Starts" : "Started")
+                    </MudText>
                     <MudText Typo="Typo.body1">@project.StartDate.Value.ToString("dd MMM yyyy")</MudText>
                 </div>
             </MudStack>
@@ -46,16 +54,17 @@ else
             <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
                 <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" />
                 <div>
-                    <MudText Typo="Typo.caption" Color="Color.Secondary">Completed</MudText>
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">Ended</MudText>
                     <MudText Typo="Typo.body1">@project.CompletedDate.Value.ToString("dd MMM yyyy")</MudText>
                 </div>
             </MudStack>
         }
     </MudStack>
 
-    <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" PanelClass="px-6 pt-6 pb-6">
+    <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true">
 
-        <MudTabPanel Text="Materials" Icon="@Icons.Material.Filled.Inventory">
+        <MudTabPanel Text="Materials" Icon="@Icons.Material.Filled.Inventory"
+                     Style="padding: 24px; padding-top: 32px;">
             <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add"
                        OnClick="OpenAddMaterialDialog" Class="mb-5">
                 Add Material
@@ -119,7 +128,8 @@ else
             }
         </MudTabPanel>
 
-        <MudTabPanel Text="Progress" Icon="@Icons.Material.Filled.TrendingUp">
+        <MudTabPanel Text="Progress" Icon="@Icons.Material.Filled.TrendingUp"
+                     Style="padding: 24px; padding-top: 32px;">
             <MudPaper Elevation="1" Class="pa-4 mb-6">
                 <MudText Typo="Typo.subtitle1" Class="mb-3">Log progress</MudText>
                 <MudGrid>
@@ -163,7 +173,8 @@ else
             }
         </MudTabPanel>
 
-        <MudTabPanel Text="Links" Icon="@Icons.Material.Filled.Link">
+        <MudTabPanel Text="Links" Icon="@Icons.Material.Filled.Link"
+                     Style="padding: 24px; padding-top: 32px;">
             <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add"
                        OnClick="OpenAddLinkDialog" Class="mb-5">
                 Add Link
@@ -192,7 +203,8 @@ else
             }
         </MudTabPanel>
 
-        <MudTabPanel Text="Contacts" Icon="@Icons.Material.Filled.Contacts">
+        <MudTabPanel Text="Contacts" Icon="@Icons.Material.Filled.Contacts"
+                     Style="padding: 24px; padding-top: 32px;">
             <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add"
                        OnClick="OpenAddContactDialog" Class="mb-5">
                 Add Contact
@@ -287,6 +299,16 @@ else
         if (m.QuantityInStock > 0)
             return ($"{m.QuantityInStock:G29} of {m.QuantityNeeded:G29}", Color.Warning);
         return ("None in stock", Color.Error);
+    }
+
+    private async Task OpenChangeStatusDialog()
+    {
+        DialogParameters<ChangeStatusDialog> parameters = new();
+        parameters.Add(x => x.ProjectId, Id);
+        parameters.Add(x => x.CurrentStatus, project!.Status);
+        IDialogReference d = await DialogService.ShowAsync<ChangeStatusDialog>("Change status", parameters);
+        DialogResult? r = await d.Result;
+        if (r is { Canceled: false }) await Load();
     }
 
     private async Task OpenAddMaterialDialog()

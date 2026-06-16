@@ -3,10 +3,10 @@
 <MudDialog>
     <DialogContent>
         <MudForm @ref="form">
-            <MudSelect T="Guid" @bind-Value="selectedContactId" Label="Contact" Required="true" Class="mb-4">
+            <MudSelect T="Guid?" @bind-Value="selectedContactId" Label="Contact" Required="true" Class="mb-4">
                 @foreach (ContactDto c in contacts)
                 {
-                    <MudSelectItem Value="c.Id">@c.Name</MudSelectItem>
+                    <MudSelectItem Value="@((Guid?)c.Id)">@c.Name</MudSelectItem>
                 }
             </MudSelect>
             <MudTextField @bind-Value="role" Label="Role" Class="mb-4" />
@@ -23,7 +23,7 @@
     [Parameter] public Guid ProjectId { get; set; }
 
     private MudForm form = null!;
-    private Guid selectedContactId;
+    private Guid? selectedContactId;
     private string? role;
     private List<ContactDto> contacts = [];
 
@@ -37,9 +37,9 @@
     private async Task Submit()
     {
         await form.ValidateAsync();
-        if (!form.IsValid) return;
+        if (!form.IsValid || selectedContactId is null) return;
 
-        await Sender.Send(new AddContactToProjectCommand(ProjectId, selectedContactId, role));
+        await Sender.Send(new AddContactToProjectCommand(ProjectId, selectedContactId.Value, role));
         MudDialog.Close(DialogResult.Ok(true));
     }
 }
