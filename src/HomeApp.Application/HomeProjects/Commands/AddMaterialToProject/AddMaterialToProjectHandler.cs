@@ -8,13 +8,13 @@ public class AddMaterialToProjectHandler(IAppDbContext dbContext) : IRequestHand
 {
     public async Task Handle(AddMaterialToProjectCommand request, CancellationToken cancellationToken)
     {
-        var join = new HomeProjectMaterial
+        HomeProjectMaterial join = new()
         {
             HomeProjectId = request.HomeProjectId,
             HomeProject = null!,
             MaterialId = request.MaterialId,
             Material = null!,
-            Quantity = request.Quantity
+            QuantityNeeded = request.QuantityNeeded
         };
 
         dbContext.HomeProjectMaterials.Add(join);
