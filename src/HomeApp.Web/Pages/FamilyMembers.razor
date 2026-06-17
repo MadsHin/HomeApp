@@ -26,9 +26,9 @@ else
             <MudTd>@context.Age</MudTd>
             <MudTd>@(context.PhoneNumber ?? "—")</MudTd>
             <MudTd>
-                <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Title="Edit"
+                <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" title="Edit"
                                OnClick="@(() => OpenEditDialog(context))" />
-                <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Title="Delete"
+                <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" title="Delete"
                                OnClick="@(() => DeleteMember(context.Id))" />
             </MudTd>
         </RowTemplate>

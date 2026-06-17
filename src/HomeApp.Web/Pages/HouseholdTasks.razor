@@ -32,17 +32,17 @@ else
             <MudTd>
                 @if (!context.IsCompleted)
                 {
-                    <MudIconButton Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" Title="Complete"
+                    <MudIconButton Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" title="Complete"
                                    OnClick="@(() => CompleteTask(context.Id))" />
                 }
                 @if (context.IsCompleted)
                 {
-                    <MudIconButton Icon="@Icons.Material.Filled.Refresh" Color="Color.Default" Title="Reopen"
+                    <MudIconButton Icon="@Icons.Material.Filled.Refresh" Color="Color.Default" title="Reopen"
                                    OnClick="@(() => ReopenTask(context.Id))" />
                 }
-                <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Title="Edit"
+                <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" title="Edit"
                                OnClick="@(() => OpenEditDialog(context))" />
-                <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Title="Delete"
+                <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" title="Delete"
                                OnClick="@(() => DeleteTask(context.Id))" />
             </MudTd>
         </RowTemplate>

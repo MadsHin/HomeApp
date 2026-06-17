@@ -462,14 +462,12 @@ else
                      Style="padding: 24px; padding-top: 32px;">
             <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-5">
                 <MudFileUpload T="IReadOnlyList<IBrowserFile>" Accept=".jpg,.jpeg,.png,.webp"
-                               FilesChanged="UploadPhotos">
-                    <ActivatorContent>
-                        <MudButton Variant="Variant.Filled" Color="Color.Primary"
-                                   StartIcon="@Icons.Material.Filled.Upload">
-                            Upload Photos
-                        </MudButton>
-                    </ActivatorContent>
-                </MudFileUpload>
+                               FilesChanged="UploadPhotos" @ref="fileUpload" />
+                <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                           StartIcon="@Icons.Material.Filled.Upload"
+                           OnClick="@(() => fileUpload!.OpenFilePickerAsync())">
+                    Upload Photos
+                </MudButton>
                 <MudButtonGroup Variant="Variant.Outlined" Size="Size.Small">
                     <MudIconButton Icon="@Icons.Material.Filled.GridView"
                                    Color="@(photoGridView ? Color.Primary : Color.Default)"
@@ -640,6 +638,7 @@ else
     private List<ProjectExpenseDto> projectExpenses = [];
     private List<PhotoDto> projectPhotos = [];
     private bool photoGridView = true;
+    private MudFileUpload<IReadOnlyList<IBrowserFile>>? fileUpload;
     private List<ProjectNoteDto> projectNotes = [];
     private List<HomeProjectToolDto> projectTools = [];
     private string noteContent = string.Empty;

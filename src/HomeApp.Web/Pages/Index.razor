@@ -199,6 +199,11 @@
                                OnClick="@(() => expensePeriod = ExpensePeriod.AllTime)">All time</MudButton>
                 </MudButtonGroup>
             </MudStack>
+            <MudSelect @bind-Value="expenseScope" Dense="true" Margin="Margin.Dense" Class="mb-3" Style="max-width:180px">
+                <MudSelectItem Value="ExpenseScope.All">All projects</MudSelectItem>
+                <MudSelectItem Value="ExpenseScope.Active">Active</MudSelectItem>
+                <MudSelectItem Value="ExpenseScope.Upcoming">Upcoming</MudSelectItem>
+            </MudSelect>
 
             @if (allExpenses is null)
             {
@@ -303,6 +308,8 @@ else
     private ExpensePeriod expensePeriod = ExpensePeriod.ThisMonth;
 
     private enum ExpensePeriod { ThisMonth, Last3Months, ThisYear, AllTime }
+    private enum ExpenseScope { All, Active, Upcoming }
+    private ExpenseScope expenseScope = ExpenseScope.All;
 
     private string Greeting => DateTime.Now.Hour switch
     {
@@ -352,6 +359,7 @@ else
         get
         {
             if (allExpenses is null) return [];
+
             DateOnly cutoff = expensePeriod switch
             {
                 ExpensePeriod.ThisMonth   => DateOnly.FromDateTime(new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1)),
@@ -359,7 +367,23 @@ else
                 ExpensePeriod.ThisYear    => new DateOnly(DateTime.Today.Year, 1, 1),
                 _                         => DateOnly.MinValue
             };
-            return allExpenses.Where(e => e.Date >= cutoff).ToList();
+
+            IEnumerable<AllExpenseDto> query = allExpenses.Where(e => e.Date >= cutoff);
+
+            if (expenseScope != ExpenseScope.All && projects is not null)
+            {
+                Dictionary<Guid, ProjectStatus> statusMap = projects.ToDictionary(p => p.Id, p => p.Status);
+                query = query.Where(e =>
+                    statusMap.TryGetValue(e.ProjectId, out ProjectStatus s) &&
+                    expenseScope switch
+                    {
+                        ExpenseScope.Active   => s == ProjectStatus.InProgress,
+                        ExpenseScope.Upcoming => s == ProjectStatus.Planning,
+                        _                     => true
+                    });
+            }
+
+            return query.ToList();
         }
     }
 

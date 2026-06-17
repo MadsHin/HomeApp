@@ -31,13 +31,13 @@ else
             <MudTd>@(context.Budget.HasValue ? $"{context.Budget.Value:N0} kr" : "—")</MudTd>
             <MudTd>@(context.StartDate.HasValue ? context.StartDate.Value.ToString("yyyy-MM-dd") : "—")</MudTd>
             <MudTd>
-                <MudIconButton Icon="@Icons.Material.Filled.Visibility" Color="Color.Default" Title="View Detail"
+                <MudIconButton Icon="@Icons.Material.Filled.Visibility" Color="Color.Default" title="View Detail"
                                OnClick="@(() => Navigation.NavigateTo($"/home-projects/{context.Id}"))" />
-                <MudIconButton Icon="@Icons.Material.Filled.SwapHoriz" Color="Color.Warning" Title="Change Status"
+                <MudIconButton Icon="@Icons.Material.Filled.SwapHoriz" Color="Color.Warning" title="Change Status"
                                OnClick="@(() => OpenChangeStatusDialog(context))" />
-                <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Title="Edit"
+                <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" title="Edit"
                                OnClick="@(() => OpenEditDialog(context))" />
-                <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Title="Delete"
+                <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" title="Delete"
                                OnClick="@(() => DeleteProject(context.Id))" />
             </MudTd>
         </RowTemplate>

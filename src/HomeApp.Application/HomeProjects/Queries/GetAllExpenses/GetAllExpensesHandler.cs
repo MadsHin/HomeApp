@@ -10,8 +10,9 @@ public class GetAllExpensesHandler(IAppDbContext dbContext) : IRequestHandler<Ge
     {
         return await dbContext.ProjectExpenses
             .Join(dbContext.HomeProjects, e => e.HomeProjectId, p => p.Id,
-                (e, p) => new AllExpenseDto(e.Id, p.Id, p.Title, e.Description, e.Amount, e.Date))
-            .OrderByDescending(e => e.Date)
+                (e, p) => new { e, p })
+            .OrderByDescending(x => x.e.Date)
+            .Select(x => new AllExpenseDto(x.e.Id, x.p.Id, x.p.Title, x.e.Description, x.e.Amount, x.e.Date))
             .ToListAsync(cancellationToken);
     }
 }
