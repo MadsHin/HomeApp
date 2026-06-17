@@ -11,5 +11,19 @@ services:
     volumes:
       - homeapp_db:/var/lib/postgresql/data
 
+  app:
+    image: ghcr.io/madshin/homeapp:latest
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__DefaultConnection=Host=db;Database=homeapp;Username=postgres;Password=postgres
+    volumes:
+      - homeapp_uploads:/app/wwwroot/uploads
+    depends_on:
+      - db
+
 volumes:
   homeapp_db:
+  homeapp_uploads:
