@@ -47,13 +47,10 @@ else
                     </div>
                 </MudStack>
             }
-            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1"
-                      Style="cursor:pointer" @onclick="OpenChangeStatusDialog">
-                <MudIcon Icon="@Icons.Material.Filled.SwapHoriz" Color="Color.Warning" Size="Size.Small" />
-                <div>
-                    <MudText Typo="Typo.caption" Color="Color.Secondary">Change status</MudText>
-                </div>
-            </MudStack>
+            <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.SwapHoriz"
+                       Size="Size.Small" OnClick="OpenChangeStatusDialog">
+                Change status
+            </MudButton>
         </MudStack>
     </MudStack>
 
