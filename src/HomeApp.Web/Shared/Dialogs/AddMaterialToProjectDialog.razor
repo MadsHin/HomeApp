@@ -10,7 +10,7 @@
                     <MudSelectItem Value="@((Guid?)m.Id)">
                         @if (m.Icon is not null)
                         {
-                            <MudIcon Icon="@m.Icon" Size="Size.Small" Class="mr-1" />
+                            <IconDisplay Icon="@m.Icon" Size="Size.Small" Class="mr-1" />
                         }
                         @m.Name
                     </MudSelectItem>

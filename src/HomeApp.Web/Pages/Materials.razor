@@ -28,12 +28,12 @@ else
                      @ondragenter="@(() => hovering = m.Id)"
                      @ondragover:preventDefault="true"
                      @ondrop="@(() => Drop(m.Id))">
-                <MudCard Elevation="2" Style="@CardStyle(m.Id)">
+                <MudCard Elevation="2" Style="@($"height:100%;{CardStyle(m.Id)}")">
                     <MudCardHeader>
                         <CardHeaderAvatar>
                             @if (m.Icon is not null)
                             {
-                                <MudIcon Icon="@m.Icon" Color="Color.Primary" Size="Size.Large" />
+                                <IconDisplay Icon="@m.Icon" Color="Color.Primary" Size="Size.Large" />
                             }
                             else
                             {

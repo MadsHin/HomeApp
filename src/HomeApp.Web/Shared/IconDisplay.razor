@@ -1,0 +1,39 @@
+@if (Icon?.StartsWith("fa:") == true)
+{
+    <i class="@(Icon[3..]) @Class" style="@FaStyle"></i>
+}
+else if (Icon is not null)
+{
+    <MudIcon Icon="@Icon" Color="@Color" Size="@Size" Class="@Class" />
+}
+
+@code {
+    [Parameter] public string? Icon { get; set; }
+    [Parameter] public Color Color { get; set; } = Color.Default;
+    [Parameter] public Size Size { get; set; } = Size.Medium;
+    [Parameter] public string? Class { get; set; }
+
+    private string FaStyle
+    {
+        get
+        {
+            string fontSize = Size switch
+            {
+                Size.Small => "font-size:1.25rem",
+                Size.Large => "font-size:2rem",
+                _ => "font-size:1.5rem"
+            };
+            string? color = Color switch
+            {
+                Color.Primary => "color:var(--mud-palette-primary)",
+                Color.Secondary => "color:var(--mud-palette-secondary)",
+                Color.Success => "color:var(--mud-palette-success)",
+                Color.Error => "color:var(--mud-palette-error)",
+                Color.Warning => "color:var(--mud-palette-warning)",
+                Color.Info => "color:var(--mud-palette-info)",
+                _ => null
+            };
+            return color is null ? fontSize : $"{fontSize};{color}";
+        }
+    }
+}

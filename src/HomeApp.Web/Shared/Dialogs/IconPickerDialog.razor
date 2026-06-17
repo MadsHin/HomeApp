@@ -1,44 +1,76 @@
 @using System.Reflection
 
-<MudDialog>
+<MudDialog Style="min-width:700px">
     <DialogContent>
-        <MudTextField Value="@search" ValueChanged="@((string s) => OnSearch(s))"
-                      Label="Search icons" Placeholder="e.g. construction, home, tool, paint…"
-                      Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search"
-                      Immediate="true" DebounceInterval="150" Class="mb-3" />
+        <MudTabs @bind-ActivePanelIndex="activeTab" Elevation="0" ApplyEffectsToContainer="true">
+            <MudTabPanel Text="Material Icons">
+                <MudTextField Value="@materialSearch" ValueChanged="@((string s) => OnMaterialSearch(s))"
+                              Label="Search icons" Placeholder="e.g. construction, home, tool, paint…"
+                              Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search"
+                              Immediate="true" DebounceInterval="150" Class="mb-3 mt-2" />
 
-        @if (search.Length < 2)
-        {
-            <MudText Typo="Typo.body2" Color="Color.Secondary">Type at least 2 characters to search</MudText>
-        }
-        else if (filteredIcons.Count == 0)
-        {
-            <MudText Typo="Typo.body2" Color="Color.Secondary">No icons found for "@search"</MudText>
-        }
-        else
-        {
-            <div style="height:360px;overflow-y:auto">
-                <MudGrid Spacing="1">
-                    @foreach ((string name, string value) in filteredIcons)
-                    {
-                        bool isSelected = name == selectedName;
-                        <MudItem xs="2" Style="text-align:center">
-                            <MudTooltip Text="@name" Placement="Placement.Top">
-                                <div style="@(isSelected ? "border-radius:8px;background:rgba(107,39,55,0.12)" : string.Empty)">
-                                    <MudIconButton Icon="@value"
-                                                   Color="@(isSelected ? Color.Primary : Color.Default)"
-                                                   OnClick="@(() => selectedName = name)" />
-                                </div>
-                            </MudTooltip>
-                        </MudItem>
-                    }
-                </MudGrid>
-            </div>
-            <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-1">
-                @filteredIcons.Count result@(filteredIcons.Count == 1 ? string.Empty : "s")
-                @(filteredIcons.Count == MaxResults ? $" (top {MaxResults})" : string.Empty)
-            </MudText>
-        }
+                @if (materialSearch.Length < 2)
+                {
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">Type at least 2 characters to search</MudText>
+                }
+                else if (filteredMaterial.Count == 0)
+                {
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">No icons found for "@materialSearch"</MudText>
+                }
+                else
+                {
+                    <div style="height:320px;overflow-y:auto">
+                        <MudGrid Spacing="1">
+                            @foreach ((string name, string value) in filteredMaterial)
+                            {
+                                bool isSelected = selectedMaterialName == name;
+                                <MudItem xs="2" Style="text-align:center">
+                                    <MudTooltip Text="@name" Placement="Placement.Top">
+                                        <div style="@(isSelected ? "border-radius:8px;background:rgba(107,39,55,0.12)" : string.Empty)">
+                                            <MudIconButton Icon="@value"
+                                                           Color="@(isSelected ? Color.Primary : Color.Default)"
+                                                           OnClick="@(() => { selectedMaterialName = name; selectedFaClass = null; })" />
+                                        </div>
+                                    </MudTooltip>
+                                </MudItem>
+                            }
+                        </MudGrid>
+                    </div>
+                    <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-1">
+                        @filteredMaterial.Count result@(filteredMaterial.Count == 1 ? string.Empty : "s")
+                        @(filteredMaterial.Count == MaxResults ? $" (top {MaxResults})" : string.Empty)
+                    </MudText>
+                }
+            </MudTabPanel>
+
+            <MudTabPanel Text="Font Awesome">
+                <MudTextField @bind-Value="faSearch" Label="Filter icons" Placeholder="e.g. hammer, pipe, wall…"
+                              Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search"
+                              Immediate="true" DebounceInterval="150" Class="mb-3 mt-2" />
+
+                <div style="height:320px;overflow-y:auto">
+                    <MudGrid Spacing="1">
+                        @foreach ((string name, string faClass) in FilteredFa)
+                        {
+                            bool isSelected = selectedFaClass == faClass;
+                            <MudItem xs="2" Style="text-align:center">
+                                <MudTooltip Text="@name" Placement="Placement.Top">
+                                    <div style="cursor:pointer;padding:8px;border-radius:8px;
+                                                @(isSelected ? "background:rgba(107,39,55,0.12)" : string.Empty)"
+                                         @onclick="@(() => { selectedFaClass = faClass; selectedMaterialName = null; })">
+                                        <i class="@faClass"
+                                           style="font-size:1.5rem;color:@(isSelected ? "var(--mud-palette-primary)" : "inherit")"></i>
+                                    </div>
+                                </MudTooltip>
+                            </MudItem>
+                        }
+                    </MudGrid>
+                </div>
+                <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-1">
+                    @FilteredFa.Count icon@(FilteredFa.Count == 1 ? string.Empty : "s")
+                </MudText>
+            </MudTabPanel>
+        </MudTabs>
     </DialogContent>
     <DialogActions>
         @if (CurrentIcon is not null)
@@ -49,7 +81,9 @@
         }
         <MudSpacer />
         <MudButton OnClick="Cancel">Cancel</MudButton>
-        <MudButton Color="Color.Primary" Disabled="@(selectedName is null)" OnClick="Submit">Select</MudButton>
+        <MudButton Color="Color.Primary" Disabled="@(selectedMaterialName is null && selectedFaClass is null)" OnClick="Submit">
+            Select
+        </MudButton>
     </DialogActions>
 </MudDialog>
 
@@ -59,11 +93,14 @@
 
     private const int MaxResults = 60;
 
-    private string search = string.Empty;
-    private string? selectedName;
-    private List<(string Name, string Value)> filteredIcons = [];
+    private int activeTab;
+    private string materialSearch = string.Empty;
+    private string faSearch = string.Empty;
+    private string? selectedMaterialName;
+    private string? selectedFaClass;
+    private List<(string Name, string Value)> filteredMaterial = [];
 
-    private static readonly List<(string Name, string Value)> AllIcons =
+    private static readonly List<(string Name, string Value)> AllMaterial =
         typeof(Icons.Material.Filled)
             .GetFields(BindingFlags.Public | BindingFlags.Static)
             .Where(f => f.FieldType == typeof(string))
@@ -71,31 +108,114 @@
             .OrderBy(i => i.Name)
             .ToList();
 
-    private static readonly Dictionary<string, string> ValueToName =
-        AllIcons
+    private static readonly Dictionary<string, string> MaterialValueToName =
+        AllMaterial
             .GroupBy(i => i.Value)
             .ToDictionary(g => g.Key, g => g.First().Name);
 
+    private static readonly List<(string Name, string Class)> AllFaIcons =
+    [
+        ("Bricks", "fa-solid fa-bricks"),
+        ("Trowel", "fa-solid fa-trowel"),
+        ("Trowel & Bricks", "fa-solid fa-trowel-bricks"),
+        ("Hammer", "fa-solid fa-hammer"),
+        ("Wrench", "fa-solid fa-wrench"),
+        ("Screwdriver", "fa-solid fa-screwdriver"),
+        ("Screwdriver & Wrench", "fa-solid fa-screwdriver-wrench"),
+        ("Toolbox", "fa-solid fa-toolbox"),
+        ("Hard Hat", "fa-solid fa-helmet-safety"),
+        ("Ruler", "fa-solid fa-ruler"),
+        ("Ruler Combined", "fa-solid fa-ruler-combined"),
+        ("Compass (drafting)", "fa-solid fa-compass-drafting"),
+        ("Paint Roller", "fa-solid fa-paint-roller"),
+        ("Paintbrush", "fa-solid fa-paintbrush"),
+        ("Tape", "fa-solid fa-tape"),
+        ("Bucket", "fa-solid fa-bucket"),
+        ("Scissors", "fa-solid fa-scissors"),
+        ("Layer Group", "fa-solid fa-layer-group"),
+        ("House", "fa-solid fa-house"),
+        ("Building", "fa-solid fa-building"),
+        ("Industry", "fa-solid fa-industry"),
+        ("Stairs", "fa-solid fa-stairs"),
+        ("Door Open", "fa-solid fa-door-open"),
+        ("Door Closed", "fa-solid fa-door-closed"),
+        ("Window", "fa-solid fa-window-maximize"),
+        ("Plug / Electrical", "fa-solid fa-plug"),
+        ("Bolt / Power", "fa-solid fa-bolt"),
+        ("Lightbulb", "fa-solid fa-lightbulb"),
+        ("Fan", "fa-solid fa-fan"),
+        ("Temperature", "fa-solid fa-temperature-half"),
+        ("Faucet", "fa-solid fa-faucet"),
+        ("Shower", "fa-solid fa-shower"),
+        ("Toilet", "fa-solid fa-toilet"),
+        ("Sink", "fa-solid fa-sink"),
+        ("Droplet / Water", "fa-solid fa-droplet"),
+        ("Water", "fa-solid fa-water"),
+        ("Fire", "fa-solid fa-fire"),
+        ("Snowflake", "fa-solid fa-snowflake"),
+        ("Sun / Outdoor", "fa-solid fa-sun"),
+        ("Tree", "fa-solid fa-tree"),
+        ("Seedling", "fa-solid fa-seedling"),
+        ("Leaf", "fa-solid fa-leaf"),
+        ("Recycle", "fa-solid fa-recycle"),
+        ("Truck", "fa-solid fa-truck"),
+        ("Box", "fa-solid fa-box"),
+        ("Boxes / Storage", "fa-solid fa-boxes-stacked"),
+        ("Cube", "fa-solid fa-cube"),
+        ("Cubes", "fa-solid fa-cubes"),
+        ("Grid / Tiles", "fa-solid fa-table-cells"),
+        ("Border / Frame", "fa-solid fa-border-all"),
+        ("File Contract", "fa-solid fa-file-contract"),
+        ("Couch", "fa-solid fa-couch"),
+        ("Bed", "fa-solid fa-bed"),
+        ("Chair", "fa-solid fa-chair"),
+        ("Rug", "fa-solid fa-rug"),
+    ];
+
+    private List<(string Name, string Class)> FilteredFa =>
+        string.IsNullOrWhiteSpace(faSearch)
+            ? AllFaIcons
+            : AllFaIcons.Where(i => i.Name.Contains(faSearch, StringComparison.OrdinalIgnoreCase)).ToList();
+
     protected override void OnInitialized()
     {
-        if (CurrentIcon is not null)
-            ValueToName.TryGetValue(CurrentIcon, out selectedName);
+        if (CurrentIcon is null) return;
+
+        if (CurrentIcon.StartsWith("fa:"))
+        {
+            selectedFaClass = CurrentIcon[3..];
+            activeTab = 1;
+        }
+        else
+        {
+            MaterialValueToName.TryGetValue(CurrentIcon, out selectedMaterialName);
+            activeTab = 0;
+        }
     }
 
-    private void OnSearch(string value)
+    private void OnMaterialSearch(string value)
     {
-        search = value;
-        filteredIcons = search.Length < 2
+        materialSearch = value;
+        filteredMaterial = materialSearch.Length < 2
             ? []
-            : AllIcons
-                .Where(i => i.Name.Contains(search, StringComparison.OrdinalIgnoreCase))
+            : AllMaterial
+                .Where(i => i.Name.Contains(materialSearch, StringComparison.OrdinalIgnoreCase))
                 .Take(MaxResults)
                 .ToList();
     }
 
     private void ClearIcon() => MudDialog.Close(DialogResult.Ok<string?>(null));
     private void Cancel() => MudDialog.Cancel();
-    private void Submit() => MudDialog.Close(
-        DialogResult.Ok(filteredIcons.FirstOrDefault(i => i.Name == selectedName).Value
-                        ?? AllIcons.FirstOrDefault(i => i.Name == selectedName).Value));
+
+    private void Submit()
+    {
+        if (selectedFaClass is not null)
+        {
+            MudDialog.Close(DialogResult.Ok<string?>($"fa:{selectedFaClass}"));
+            return;
+        }
+        string? value = filteredMaterial.FirstOrDefault(i => i.Name == selectedMaterialName).Value
+                        ?? AllMaterial.FirstOrDefault(i => i.Name == selectedMaterialName).Value;
+        MudDialog.Close(DialogResult.Ok<string?>(value));
+    }
 }
