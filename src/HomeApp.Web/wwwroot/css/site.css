@@ -38,6 +38,13 @@ a, .btn-link {
     color: red;
 }
 
+/* Smaller nav icons globally */
+.mud-nav-link .mud-icon-root {
+    font-size: 1.1rem !important;
+    width: 1.1rem !important;
+    height: 1.1rem !important;
+}
+
 @media (max-width: 600px) {
     /* Tighten main content area */
     .mud-main-content .mud-container {

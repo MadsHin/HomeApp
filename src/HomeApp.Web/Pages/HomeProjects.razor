@@ -26,18 +26,20 @@ else
         <RowTemplate>
             <MudTd>@context.Title</MudTd>
             <MudTd>
-                <MudChip T="string" Color="@StatusColor(context.Status)" Size="Size.Small">@context.Status</MudChip>
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="0">
+                    <MudChip T="string" Color="@StatusColor(context.Status)" Size="Size.Small">@context.Status</MudChip>
+                    <MudIconButton Icon="@Icons.Material.Filled.SwapHoriz" Color="Color.Warning" Size="Size.Small" title="Change Status"
+                                   OnClick="@(() => OpenChangeStatusDialog(context))" />
+                </MudStack>
             </MudTd>
             <MudTd>@(context.Budget.HasValue ? $"{context.Budget.Value:N0} kr" : "—")</MudTd>
             <MudTd>@(context.StartDate.HasValue ? context.StartDate.Value.ToString("yyyy-MM-dd") : "—")</MudTd>
             <MudTd>
-                <MudIconButton Icon="@Icons.Material.Filled.Visibility" Color="Color.Default" title="View Detail"
+                <MudIconButton Icon="@Icons.Material.Filled.Visibility" Color="Color.Default" Size="Size.Small" title="View Detail"
                                OnClick="@(() => Navigation.NavigateTo($"/home-projects/{context.Id}"))" />
-                <MudIconButton Icon="@Icons.Material.Filled.SwapHoriz" Color="Color.Warning" title="Change Status"
-                               OnClick="@(() => OpenChangeStatusDialog(context))" />
-                <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" title="Edit"
+                <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small" title="Edit"
                                OnClick="@(() => OpenEditDialog(context))" />
-                <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" title="Delete"
+                <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" title="Delete"
                                OnClick="@(() => DeleteProject(context.Id))" />
             </MudTd>
         </RowTemplate>
