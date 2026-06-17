@@ -6,6 +6,9 @@
 # dotenv files
 .env
 
+# User-uploaded content
+src/HomeApp.Web/wwwroot/uploads/
+
 # User-specific files
 *.rsuser
 *.suo
