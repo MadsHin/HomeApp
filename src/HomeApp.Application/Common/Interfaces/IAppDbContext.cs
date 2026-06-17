@@ -15,6 +15,7 @@ public interface IAppDbContext
     DbSet<Photo> Photos { get; }
     DbSet<ProgressEntry> ProgressEntries { get; }
     DbSet<ProjectLink> ProjectLinks { get; }
+    DbSet<ProjectTimelineEvent> ProjectTimelineEvents { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

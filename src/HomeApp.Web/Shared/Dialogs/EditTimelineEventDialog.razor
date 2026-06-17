@@ -1,0 +1,39 @@
+@inject ISender Sender
+
+<MudDialog>
+    <DialogContent>
+        <MudTextField @bind-Value="title" Label="Title" Required="true" Class="mb-4" />
+        <MudDatePicker @bind-Date="date" Label="Date (optional)" Clearable="true" />
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Submit">Save</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = null!;
+    [Parameter] public Guid EventId { get; set; }
+    [Parameter] public string InitialTitle { get; set; } = string.Empty;
+    [Parameter] public DateOnly? InitialDate { get; set; }
+
+    private string title = string.Empty;
+    private DateTime? date;
+
+    protected override void OnInitialized()
+    {
+        title = InitialTitle;
+        date = InitialDate.HasValue ? InitialDate.Value.ToDateTime(TimeOnly.MinValue) : null;
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private async Task Submit()
+    {
+        if (string.IsNullOrWhiteSpace(title)) return;
+
+        DateOnly? dateOnly = date.HasValue ? DateOnly.FromDateTime(date.Value) : null;
+        await Sender.Send(new UpdateTimelineEventCommand(EventId, title, dateOnly));
+        MudDialog.Close(DialogResult.Ok(true));
+    }
+}

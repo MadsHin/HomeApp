@@ -63,6 +63,70 @@ else
 
     <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true">
 
+        <MudTabPanel Text="Timeline" Icon="@Icons.Material.Filled.Timeline"
+                     Style="padding: 24px; padding-top: 32px;">
+            <MudPaper Elevation="1" Class="pa-4 mb-6">
+                <MudText Typo="Typo.subtitle1" Class="mb-3">Add step</MudText>
+                <MudGrid>
+                    <MudItem xs="12" sm="5">
+                        <MudTextField @bind-Value="timelineTitle" Label="Title" />
+                    </MudItem>
+                    <MudItem xs="12" sm="4">
+                        <MudDatePicker @bind-Date="timelineDate" Label="Date (optional)" Clearable="true" />
+                    </MudItem>
+                    <MudItem xs="12" sm="3" Class="d-flex align-end">
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="AddTimelineEvent">
+                            Add
+                        </MudButton>
+                    </MudItem>
+                </MudGrid>
+            </MudPaper>
+
+            @if (timelineEvents.Count == 0)
+            {
+                <MudText Color="Color.Secondary">No steps added yet.</MudText>
+            }
+            else
+            {
+                <MudTimeline TimelinePosition="TimelinePosition.Start">
+                    @foreach (ProjectTimelineEventDto ev in timelineEvents)
+                    {
+                        <MudTimelineItem Color="@(ev.Date.HasValue ? Color.Primary : Color.Default)"
+                                         Size="Size.Small"
+                                         draggable="true"
+                                         @ondragstart="@(() => timelineDragging = ev.Id)"
+                                         @ondragend="@(() => { timelineDragging = null; timelineHovering = null; })"
+                                         @ondragenter="@(() => timelineHovering = ev.Id)"
+                                         @ondragover:preventDefault="true"
+                                         @ondrop="@(() => TimelineDrop(ev.Id))"
+                                         Style="@TimelineItemStyle(ev.Id)">
+                            <ItemContent>
+                                <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                                    <div>
+                                        <MudText Typo="Typo.body1">@ev.Title</MudText>
+                                        @if (ev.Date.HasValue)
+                                        {
+                                            <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                                @ev.Date.Value.ToString("dd MMM yyyy")
+                                            </MudText>
+                                        }
+                                    </div>
+                                    <MudStack Row="true" Spacing="0">
+                                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
+                                                       Color="Color.Primary"
+                                                       OnClick="@(() => OpenEditTimelineEventDialog(ev))" />
+                                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
+                                                       Color="Color.Error"
+                                                       OnClick="@(() => DeleteTimelineEvent(ev.Id))" />
+                                    </MudStack>
+                                </MudStack>
+                            </ItemContent>
+                        </MudTimelineItem>
+                    }
+                </MudTimeline>
+            }
+        </MudTabPanel>
+
         <MudTabPanel Text="Materials" Icon="@Icons.Material.Filled.Inventory"
                      Style="padding: 24px; padding-top: 32px;">
             <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add"
@@ -119,6 +183,9 @@ else
                             <MudChip T="string" Size="Size.Small" Color="@color">@label</MudChip>
                         </MudTd>
                         <MudTd>
+                            <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
+                                           Color="Color.Primary"
+                                           OnClick="@(() => OpenEditMaterialDialog(context))" />
                             <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
                                            Color="Color.Error"
                                            OnClick="@(() => RemoveMaterial(context.MaterialId))" />
@@ -266,9 +333,15 @@ else
     private List<ProgressEntryDto> progressEntries = [];
     private List<ProjectLinkDto> projectLinks = [];
     private List<ProjectContactDto> projectContacts = [];
+    private List<ProjectTimelineEventDto> timelineEvents = [];
 
     private DateTime? progressDate = DateTime.Today;
     private string progressNote = string.Empty;
+
+    private string timelineTitle = string.Empty;
+    private DateTime? timelineDate;
+    private Guid? timelineDragging;
+    private Guid? timelineHovering;
 
     protected override async Task OnInitializedAsync() => await Load();
 
@@ -279,6 +352,60 @@ else
         progressEntries = await Sender.Send(new GetProjectProgressEntriesQuery(Id));
         projectLinks = await Sender.Send(new GetProjectLinksQuery(Id));
         projectContacts = await Sender.Send(new GetProjectContactsQuery(Id));
+        timelineEvents = await Sender.Send(new GetProjectTimelineEventsQuery(Id));
+    }
+
+    private string TimelineItemStyle(Guid id)
+    {
+        if (id == timelineDragging) return "opacity:0.4;cursor:grabbing;";
+        if (id == timelineHovering) return "outline:2px dashed #6B2737;outline-offset:3px;cursor:grab;";
+        return "cursor:grab;";
+    }
+
+    private async Task TimelineDrop(Guid targetId)
+    {
+        if (timelineDragging is null || timelineDragging == targetId) return;
+
+        ProjectTimelineEventDto? dragged = timelineEvents.FirstOrDefault(e => e.Id == timelineDragging);
+        if (dragged is null) return;
+
+        int from = timelineEvents.IndexOf(dragged);
+        int to   = timelineEvents.IndexOf(timelineEvents.First(e => e.Id == targetId));
+
+        timelineEvents.RemoveAt(from);
+        timelineEvents.Insert(to, dragged);
+
+        timelineDragging = null;
+        timelineHovering = null;
+
+        await Sender.Send(new ReorderTimelineEventsCommand(timelineEvents.Select(e => e.Id).ToList()));
+    }
+
+    private async Task AddTimelineEvent()
+    {
+        if (string.IsNullOrWhiteSpace(timelineTitle)) return;
+        DateOnly? date = timelineDate.HasValue ? DateOnly.FromDateTime(timelineDate.Value) : null;
+        await Sender.Send(new AddTimelineEventCommand(Id, timelineTitle, date));
+        timelineTitle = string.Empty;
+        timelineDate = null;
+        await Load();
+    }
+
+    private async Task OpenEditTimelineEventDialog(ProjectTimelineEventDto ev)
+    {
+        DialogParameters<EditTimelineEventDialog> parameters = new();
+        parameters.Add(x => x.EventId, ev.Id);
+        parameters.Add(x => x.InitialTitle, ev.Title);
+        parameters.Add(x => x.InitialDate, ev.Date);
+        IDialogReference d = await DialogService.ShowAsync<EditTimelineEventDialog>("Edit step", parameters);
+        DialogResult? r = await d.Result;
+        if (r is { Canceled: false }) await Load();
+    }
+
+    private async Task DeleteTimelineEvent(Guid eventId)
+    {
+        await Sender.Send(new DeleteTimelineEventCommand(eventId));
+        await Load();
     }
 
     private Color StatusColor(ProjectStatus status) => status switch
@@ -315,7 +442,20 @@ else
     {
         DialogParameters<AddMaterialToProjectDialog> parameters = new();
         parameters.Add(x => x.ProjectId, Id);
+        parameters.Add(x => x.ExcludedIds, projectMaterials.Select(m => m.MaterialId).ToList());
         IDialogReference d = await DialogService.ShowAsync<AddMaterialToProjectDialog>("Add Material", parameters);
+        DialogResult? r = await d.Result;
+        if (r is { Canceled: false }) await Load();
+    }
+
+    private async Task OpenEditMaterialDialog(ProjectMaterialDto material)
+    {
+        DialogParameters<EditProjectMaterialDialog> parameters = new();
+        parameters.Add(x => x.ProjectId, Id);
+        parameters.Add(x => x.MaterialId, material.MaterialId);
+        parameters.Add(x => x.QuantityNeeded, material.QuantityNeeded);
+        parameters.Add(x => x.Unit, material.Unit);
+        IDialogReference d = await DialogService.ShowAsync<EditProjectMaterialDialog>("Edit quantity", parameters);
         DialogResult? r = await d.Result;
         if (r is { Canceled: false }) await Load();
     }
