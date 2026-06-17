@@ -165,6 +165,12 @@ else
                             <MudText Typo="Typo.caption">Budget: @project.Budget.Value.ToString("N0") kr</MudText>
                         </MudCardContent>
                     }
+                    <MudCardActions>
+                        <MudButton Variant="Variant.Text" Color="Color.Primary"
+                                   Href="@($"/home-projects/{project.Id}")">
+                            View
+                        </MudButton>
+                    </MudCardActions>
                 </MudCard>
             </MudItem>
         }
