@@ -88,7 +88,8 @@ else
         DialogParameters<ChangeStatusDialog> parameters = new();
         parameters.Add(x => x.ProjectId, project.Id);
         parameters.Add(x => x.CurrentStatus, project.Status);
-        IDialogReference d = await DialogService.ShowAsync<ChangeStatusDialog>("Change Status", parameters);
+        IDialogReference d = await DialogService.ShowAsync<ChangeStatusDialog>("Change Status", parameters,
+            new DialogOptions { MaxWidth = MaxWidth.ExtraSmall, FullWidth = true });
         DialogResult? r = await d.Result;
         if (r is { Canceled: false }) await Load();
     }
