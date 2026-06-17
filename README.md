@@ -3,7 +3,7 @@
 A self-hosted home management web application built with .NET 10 and Blazor Server. Personal learning project covering Clean Architecture, CQRS, and EF Core.
 
 ## Features
-
+g
 - **Dashboard** — overview of active projects, upcoming tasks, lent/borrowed tools, and expense summary with period and scope filters
 - **Home Projects** — track renovation and home improvement projects with status, budget, timeline events, materials, tools, expenses, contacts, notes, and photos
 - **Household Tasks** — recurring and one-off tasks with due dates, recurrence, and family member assignment
@@ -17,7 +17,7 @@ A self-hosted home management web application built with .NET 10 and Blazor Serv
 
 | Layer | Technology |
 |---|---|
-| Frontend | Blazor Server (.NET 10) + MudBlazor 9.5 |
+| Frontend | Blazor Server  (.NET 10) + MudBlazor 9.5 |
 | Application | MediatR 14 (CQRS) |
 | Persistence | EF Core 10 + Npgsql (PostgreSQL 16) |
 | Icons | MudBlazor Material Icons + Font Awesome Free 6.7 |
