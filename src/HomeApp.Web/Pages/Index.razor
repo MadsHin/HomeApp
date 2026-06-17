@@ -188,16 +188,12 @@
                     <MudIcon Icon="@Icons.Material.Filled.Receipt" Class="mr-2" />
                     Expenses
                 </MudText>
-                <MudButtonGroup Variant="Variant.Outlined" Size="Size.Small">
-                    <MudButton Color="@(expensePeriod == ExpensePeriod.ThisMonth ? Color.Primary : Color.Default)"
-                               OnClick="@(() => expensePeriod = ExpensePeriod.ThisMonth)">Month</MudButton>
-                    <MudButton Color="@(expensePeriod == ExpensePeriod.Last3Months ? Color.Primary : Color.Default)"
-                               OnClick="@(() => expensePeriod = ExpensePeriod.Last3Months)">3 months</MudButton>
-                    <MudButton Color="@(expensePeriod == ExpensePeriod.ThisYear ? Color.Primary : Color.Default)"
-                               OnClick="@(() => expensePeriod = ExpensePeriod.ThisYear)">Year</MudButton>
-                    <MudButton Color="@(expensePeriod == ExpensePeriod.AllTime ? Color.Primary : Color.Default)"
-                               OnClick="@(() => expensePeriod = ExpensePeriod.AllTime)">All time</MudButton>
-                </MudButtonGroup>
+                <MudSelect @bind-Value="expensePeriod" Dense="true" Margin="Margin.Dense" Style="max-width:140px">
+                    <MudSelectItem Value="ExpensePeriod.ThisMonth">Month</MudSelectItem>
+                    <MudSelectItem Value="ExpensePeriod.Last3Months">3 months</MudSelectItem>
+                    <MudSelectItem Value="ExpensePeriod.ThisYear">Year</MudSelectItem>
+                    <MudSelectItem Value="ExpensePeriod.AllTime">All time</MudSelectItem>
+                </MudSelect>
             </MudStack>
             <MudSelect @bind-Value="expenseScope" Dense="true" Margin="Margin.Dense" Class="mb-3" Style="max-width:180px">
                 <MudSelectItem Value="ExpenseScope.All">All projects</MudSelectItem>
