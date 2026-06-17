@@ -1,5 +1,7 @@
 using HomeApp.Application;
 using HomeApp.Infrastructure;
+using HomeApp.Infrastructure.Persistance;
+using Microsoft.EntityFrameworkCore;
 using MudBlazor.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -13,6 +15,12 @@ builder.Services.AddServerSideBlazor();
 builder.Services.AddMudServices();
 
 var app = builder.Build();
+
+using (IServiceScope scope = app.Services.CreateScope())
+{
+    AppDbContext db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    db.Database.Migrate();
+}
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
