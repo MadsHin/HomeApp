@@ -6,8 +6,6 @@ services:
       POSTGRES_DB: homeapp
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-    ports:
-      - "5432:5432"
     volumes:
       - homeapp_db:/var/lib/postgresql/data
 
@@ -18,7 +16,7 @@ services:
       - "8080:8080"
     environment:
       - ASPNETCORE_URLS=http://+:8080
-      - ConnectionStrings__DefaultConnection=Host=db;Database=homeapp;Username=postgres;Password=postgres
+      - ConnectionStrings__Default=Host=db;Database=homeapp;Username=postgres;Password=postgres
     volumes:
       - homeapp_uploads:/app/wwwroot/uploads
     depends_on:
