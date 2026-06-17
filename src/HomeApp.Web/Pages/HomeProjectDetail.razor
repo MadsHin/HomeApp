@@ -1,6 +1,7 @@
 @page "/home-projects/{Id:guid}"
 @inject ISender Sender
 @inject IDialogService DialogService
+@inject IWebHostEnvironment Env
 
 @if (project is null)
 {
@@ -88,14 +89,13 @@ else
             }
             else
             {
-                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-4">
-                    <MudText Typo="Typo.body2" Color="Color.Secondary">
+                <div class="mb-4">
+                    <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-1">
                         @timelineEvents.Count(e => e.IsCompleted) of @timelineEvents.Count steps done
                     </MudText>
                     <MudProgressLinear Value="@((double)timelineEvents.Count(e => e.IsCompleted) / timelineEvents.Count * 100)"
-                                       Color="Color.Success" Rounded="true" Size="Size.Small"
-                                       Style="flex:1; max-width:200px" />
-                </MudStack>
+                                       Color="Color.Success" Rounded="true" Size="Size.Small" />
+                </div>
 
                 <MudTimeline TimelinePosition="TimelinePosition.Start">
                     @foreach (ProjectTimelineEventDto ev in timelineEvents)
@@ -326,6 +326,51 @@ else
             }
         </MudTabPanel>
 
+        <MudTabPanel Text="Photos" Icon="@Icons.Material.Filled.PhotoLibrary"
+                     Style="padding: 24px; padding-top: 32px;">
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="3" Class="mb-5">
+                <MudFileUpload T="IBrowserFile" Accept=".jpg,.jpeg,.png,.webp" FilesChanged="UploadPhoto">
+                    <ActivatorContent>
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                                   StartIcon="@Icons.Material.Filled.Upload">
+                            Upload Photo
+                        </MudButton>
+                    </ActivatorContent>
+                </MudFileUpload>
+                <MudTextField @bind-Value="photoCaption" Label="Caption (optional)" Style="max-width:300px" />
+            </MudStack>
+
+            @if (projectPhotos.Count == 0)
+            {
+                <MudText Color="Color.Secondary">No photos yet.</MudText>
+            }
+            else
+            {
+                <MudGrid>
+                    @foreach (PhotoDto photo in projectPhotos)
+                    {
+                        <MudItem xs="12" sm="6" md="4">
+                            <MudCard Elevation="2">
+                                <MudCardMedia Image="@($"/uploads/photos/{photo.StoredFileName}")"
+                                              Height="200" />
+                                @if (photo.Caption is not null)
+                                {
+                                    <MudCardContent Class="pa-2">
+                                        <MudText Typo="Typo.caption">@photo.Caption</MudText>
+                                    </MudCardContent>
+                                }
+                                <MudCardActions>
+                                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
+                                                   Color="Color.Error"
+                                                   OnClick="@(() => DeletePhoto(photo.Id, photo.StoredFileName))" />
+                                </MudCardActions>
+                            </MudCard>
+                        </MudItem>
+                    }
+                </MudGrid>
+            }
+        </MudTabPanel>
+
         <MudTabPanel Text="Links" Icon="@Icons.Material.Filled.Link"
                      Style="padding: 24px; padding-top: 32px;">
             <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add"
@@ -421,6 +466,8 @@ else
     private List<ProjectContactDto> projectContacts = [];
     private List<ProjectTimelineEventDto> timelineEvents = [];
     private List<ProjectExpenseDto> projectExpenses = [];
+    private List<PhotoDto> projectPhotos = [];
+    private string photoCaption = string.Empty;
 
     private DateTime? progressDate = DateTime.Today;
     private string progressNote = string.Empty;
@@ -445,6 +492,7 @@ else
         projectContacts = await Sender.Send(new GetProjectContactsQuery(Id));
         timelineEvents = await Sender.Send(new GetProjectTimelineEventsQuery(Id));
         projectExpenses = await Sender.Send(new GetProjectExpensesQuery(Id));
+        projectPhotos = await Sender.Send(new GetProjectPhotosQuery(Id));
     }
 
     private string TimelineItemStyle(Guid id)
@@ -522,6 +570,38 @@ else
     private async Task DeleteExpense(Guid expenseId)
     {
         await Sender.Send(new DeleteProjectExpenseCommand(expenseId));
+        await Load();
+    }
+
+    private async Task UploadPhoto(IBrowserFile file)
+    {
+        string ext = Path.GetExtension(file.Name);
+        string storedFileName = $"{Guid.NewGuid()}{ext}";
+        string uploadPath = Path.Combine(Env.WebRootPath, "uploads", "photos", storedFileName);
+
+        Directory.CreateDirectory(Path.GetDirectoryName(uploadPath)!);
+
+        await using FileStream fs = new(uploadPath, FileMode.Create);
+        await file.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024).CopyToAsync(fs);
+
+        await Sender.Send(new AddPhotoCommand(
+            Id,
+            file.Name,
+            storedFileName,
+            string.IsNullOrWhiteSpace(photoCaption) ? null : photoCaption));
+
+        photoCaption = string.Empty;
+        await Load();
+    }
+
+    private async Task DeletePhoto(Guid photoId, string storedFileName)
+    {
+        await Sender.Send(new DeletePhotoCommand(photoId));
+
+        string filePath = Path.Combine(Env.WebRootPath, "uploads", "photos", storedFileName);
+        if (File.Exists(filePath))
+            File.Delete(filePath);
+
         await Load();
     }
 
