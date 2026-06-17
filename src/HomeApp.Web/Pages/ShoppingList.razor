@@ -1,0 +1,66 @@
+@page "/shopping-list"
+@inject ISender Sender
+
+<MudText Typo="Typo.h4" Class="mb-2">Shopping List</MudText>
+<MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-6">
+    Materials needed across all projects where stock falls short.
+</MudText>
+
+@if (items is null)
+{
+    <MudProgressCircular Indeterminate="true" />
+}
+else if (items.Count == 0)
+{
+    <MudAlert Severity="Severity.Success">
+        All project materials are covered by current stock — nothing to buy.
+    </MudAlert>
+}
+else
+{
+    <MudTable T="ShoppingListItemDto" Items="items" Hover="true" Elevation="2">
+        <HeaderContent>
+            <MudTh>Material</MudTh>
+            <MudTh Style="text-align:right">Needed</MudTh>
+            <MudTh Style="text-align:right">In stock</MudTh>
+            <MudTh Style="text-align:right">To buy</MudTh>
+            <MudTh>Projects</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd>
+                <MudText Typo="Typo.body1">@context.Name</MudText>
+                @if (context.Unit is not null)
+                {
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">@context.Unit</MudText>
+                }
+            </MudTd>
+            <MudTd Style="text-align:right">@context.TotalNeeded.ToString("G29")</MudTd>
+            <MudTd Style="text-align:right">@(context.InStock?.ToString("G29") ?? "—")</MudTd>
+            <MudTd Style="text-align:right">
+                <MudText Color="Color.Error"><strong>@context.Shortfall.ToString("G29")</strong></MudText>
+            </MudTd>
+            <MudTd>
+                <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="1">
+                    @foreach (string proj in context.ProjectNames)
+                    {
+                        <MudChip T="string" Size="Size.Small" Color="Color.Default">@proj</MudChip>
+                    }
+                </MudStack>
+            </MudTd>
+        </RowTemplate>
+        <FooterContent>
+            <MudTd colspan="3"><strong>@items.Count item@(items.Count == 1 ? string.Empty : "s") to buy</strong></MudTd>
+            <MudTd />
+            <MudTd />
+        </FooterContent>
+    </MudTable>
+}
+
+@code {
+    private List<ShoppingListItemDto>? items;
+
+    protected override async Task OnInitializedAsync()
+    {
+        items = await Sender.Send(new GetShoppingListQuery());
+    }
+}

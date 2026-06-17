@@ -125,6 +125,105 @@
     </MudItem>
 </MudGrid>
 
+<!-- Tools away + Expenses -->
+<MudGrid Class="mb-8">
+
+    @if (LentOutTools.Count > 0 || BorrowedTools.Count > 0)
+    {
+        <MudItem xs="12" md="5">
+            <MudPaper Class="pa-4" Elevation="2" Style="height:100%">
+                <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-3">
+                    <MudText Typo="Typo.h6">
+                        <MudIcon Icon="@Icons.Material.Filled.Handyman" Class="mr-2" />
+                        Tools away
+                    </MudText>
+                    <MudButton Variant="Variant.Text" Color="Color.Primary" Href="/tools" Size="Size.Small">
+                        All tools
+                    </MudButton>
+                </MudStack>
+
+                @if (LentOutTools.Count > 0)
+                {
+                    <MudText Typo="Typo.caption" Color="Color.Warning" Class="mb-1">LENT OUT</MudText>
+                    @foreach (ToolDto t in LentOutTools)
+                    {
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-1">
+                            <MudIcon Icon="@Icons.Material.Filled.ArrowForward" Size="Size.Small" Color="Color.Warning" />
+                            <MudText Typo="Typo.body2">
+                                <strong>@t.Name</strong>
+                                @if (t.StatusNote is not null)
+                                {
+                                    <span class="mud-secondary-text"> → @t.StatusNote</span>
+                                }
+                            </MudText>
+                        </MudStack>
+                    }
+                }
+
+                @if (BorrowedTools.Count > 0)
+                {
+                    <MudText Typo="Typo.caption" Color="Color.Info" Class="@(LentOutTools.Count > 0 ? "mt-3 mb-1" : "mb-1")">BORROWED</MudText>
+                    @foreach (ToolDto t in BorrowedTools)
+                    {
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-1">
+                            <MudIcon Icon="@Icons.Material.Filled.ArrowBack" Size="Size.Small" Color="Color.Info" />
+                            <MudText Typo="Typo.body2">
+                                <strong>@t.Name</strong>
+                                @if (t.StatusNote is not null)
+                                {
+                                    <span class="mud-secondary-text"> from @t.StatusNote</span>
+                                }
+                            </MudText>
+                        </MudStack>
+                    }
+                }
+            </MudPaper>
+        </MudItem>
+    }
+
+    <MudItem xs="12" md="@(LentOutTools.Count > 0 || BorrowedTools.Count > 0 ? 7 : 12)">
+        <MudPaper Class="pa-4" Elevation="2" Style="height:100%">
+            <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-3">
+                <MudText Typo="Typo.h6">
+                    <MudIcon Icon="@Icons.Material.Filled.Receipt" Class="mr-2" />
+                    Expenses
+                </MudText>
+                <MudButtonGroup Variant="Variant.Outlined" Size="Size.Small">
+                    <MudButton Color="@(expensePeriod == ExpensePeriod.ThisMonth ? Color.Primary : Color.Default)"
+                               OnClick="@(() => expensePeriod = ExpensePeriod.ThisMonth)">Month</MudButton>
+                    <MudButton Color="@(expensePeriod == ExpensePeriod.Last3Months ? Color.Primary : Color.Default)"
+                               OnClick="@(() => expensePeriod = ExpensePeriod.Last3Months)">3 months</MudButton>
+                    <MudButton Color="@(expensePeriod == ExpensePeriod.ThisYear ? Color.Primary : Color.Default)"
+                               OnClick="@(() => expensePeriod = ExpensePeriod.ThisYear)">Year</MudButton>
+                    <MudButton Color="@(expensePeriod == ExpensePeriod.AllTime ? Color.Primary : Color.Default)"
+                               OnClick="@(() => expensePeriod = ExpensePeriod.AllTime)">All time</MudButton>
+                </MudButtonGroup>
+            </MudStack>
+
+            @if (allExpenses is null)
+            {
+                <MudProgressLinear Indeterminate="true" />
+            }
+            else if (FilteredExpenses.Count == 0)
+            {
+                <MudText Color="Color.Secondary">No expenses in this period.</MudText>
+            }
+            else
+            {
+                <MudText Typo="Typo.h4" Class="mb-3">@FilteredExpenses.Sum(e => e.Amount).ToString("N0") kr</MudText>
+                @foreach (var group in FilteredExpenses.GroupBy(e => e.ProjectTitle).OrderByDescending(g => g.Sum(e => e.Amount)))
+                {
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-1">
+                        <MudText Typo="Typo.body2">@group.Key</MudText>
+                        <MudText Typo="Typo.body2">@group.Sum(e => e.Amount).ToString("N0") kr</MudText>
+                    </MudStack>
+                }
+            }
+        </MudPaper>
+    </MudItem>
+
+</MudGrid>
+
 <!-- Active projects -->
 <MudText Typo="Typo.h6" Class="mb-3">
     <MudIcon Icon="@Icons.Material.Filled.Construction" Class="mr-2" />
@@ -199,6 +298,11 @@ else
     private List<HouseholdTaskDto>? allTasks;
     private List<HomeProjectDto>? projects;
     private List<FamilyMemberDto>? familyMembers;
+    private List<ToolDto>? tools;
+    private List<AllExpenseDto>? allExpenses;
+    private ExpensePeriod expensePeriod = ExpensePeriod.ThisMonth;
+
+    private enum ExpensePeriod { ThisMonth, Last3Months, ThisYear, AllTime }
 
     private string Greeting => DateTime.Now.Hour switch
     {
@@ -236,6 +340,27 @@ else
         allTasks = await Sender.Send(new GetHouseholdTasksQuery());
         projects = await Sender.Send(new GetHomeProjectsQuery());
         familyMembers = await Sender.Send(new GetFamilyMembersQuery());
+        tools = await Sender.Send(new GetToolsQuery());
+        allExpenses = await Sender.Send(new GetAllExpensesQuery());
+    }
+
+    private List<ToolDto> LentOutTools => tools?.Where(t => t.Status == ToolStatus.LentOut).ToList() ?? [];
+    private List<ToolDto> BorrowedTools => tools?.Where(t => t.Status == ToolStatus.Borrowed).ToList() ?? [];
+
+    private List<AllExpenseDto> FilteredExpenses
+    {
+        get
+        {
+            if (allExpenses is null) return [];
+            DateOnly cutoff = expensePeriod switch
+            {
+                ExpensePeriod.ThisMonth   => DateOnly.FromDateTime(new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1)),
+                ExpensePeriod.Last3Months => DateOnly.FromDateTime(DateTime.Today.AddMonths(-3)),
+                ExpensePeriod.ThisYear    => new DateOnly(DateTime.Today.Year, 1, 1),
+                _                         => DateOnly.MinValue
+            };
+            return allExpenses.Where(e => e.Date >= cutoff).ToList();
+        }
     }
 
     private async Task CompleteTask(Guid id)
