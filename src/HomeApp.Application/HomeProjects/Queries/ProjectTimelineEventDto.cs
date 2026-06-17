@@ -4,5 +4,6 @@ public record ProjectTimelineEventDto(
     Guid Id,
     string Title,
     DateOnly? Date,
-    int SortOrder
+    int SortOrder,
+    bool IsCompleted
 );

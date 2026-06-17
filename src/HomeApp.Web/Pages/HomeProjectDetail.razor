@@ -88,10 +88,19 @@ else
             }
             else
             {
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-4">
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">
+                        @timelineEvents.Count(e => e.IsCompleted) of @timelineEvents.Count steps done
+                    </MudText>
+                    <MudProgressLinear Value="@((double)timelineEvents.Count(e => e.IsCompleted) / timelineEvents.Count * 100)"
+                                       Color="Color.Success" Rounded="true" Size="Size.Small"
+                                       Style="flex:1; max-width:200px" />
+                </MudStack>
+
                 <MudTimeline TimelinePosition="TimelinePosition.Start">
                     @foreach (ProjectTimelineEventDto ev in timelineEvents)
                     {
-                        <MudTimelineItem Color="@(ev.Date.HasValue ? Color.Primary : Color.Default)"
+                        <MudTimelineItem Color="@(ev.IsCompleted ? Color.Success : (ev.Date.HasValue ? Color.Primary : Color.Default))"
                                          Size="Size.Small"
                                          draggable="true"
                                          @ondragstart="@(() => timelineDragging = ev.Id)"
@@ -103,7 +112,10 @@ else
                             <ItemContent>
                                 <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
                                     <div>
-                                        <MudText Typo="Typo.body1">@ev.Title</MudText>
+                                        <MudText Typo="Typo.body1"
+                                                 Style="@(ev.IsCompleted ? "text-decoration:line-through;opacity:0.6" : string.Empty)">
+                                            @ev.Title
+                                        </MudText>
                                         @if (ev.Date.HasValue)
                                         {
                                             <MudText Typo="Typo.caption" Color="Color.Secondary">
@@ -112,6 +124,9 @@ else
                                         }
                                     </div>
                                     <MudStack Row="true" Spacing="0">
+                                        <MudIconButton Icon="@(ev.IsCompleted ? Icons.Material.Filled.CheckCircle : Icons.Material.Outlined.CheckCircle)"
+                                                       Size="Size.Small" Color="Color.Success"
+                                                       OnClick="@(() => ToggleTimelineEvent(ev.Id))" />
                                         <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
                                                        Color="Color.Primary"
                                                        OnClick="@(() => OpenEditTimelineEventDialog(ev))" />
@@ -240,6 +255,77 @@ else
             }
         </MudTabPanel>
 
+        <MudTabPanel Text="Expenses" Icon="@Icons.Material.Filled.Receipt"
+                     Style="padding: 24px; padding-top: 32px;">
+            <MudPaper Elevation="1" Class="pa-4 mb-6">
+                <MudText Typo="Typo.subtitle1" Class="mb-3">Add expense</MudText>
+                <MudGrid>
+                    <MudItem xs="12" sm="4">
+                        <MudTextField @bind-Value="expenseDescription" Label="Description" />
+                    </MudItem>
+                    <MudItem xs="12" sm="3">
+                        <MudNumericField @bind-Value="expenseAmount" Label="Amount (kr)" Min="0" />
+                    </MudItem>
+                    <MudItem xs="12" sm="3">
+                        <MudDatePicker @bind-Date="expenseDate" Label="Date" />
+                    </MudItem>
+                    <MudItem xs="12" sm="2" Class="d-flex align-end">
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="AddExpense">
+                            Add
+                        </MudButton>
+                    </MudItem>
+                </MudGrid>
+            </MudPaper>
+
+            @if (projectExpenses.Count == 0)
+            {
+                <MudText Color="Color.Secondary">No expenses logged yet.</MudText>
+            }
+            else
+            {
+                @if (project!.Budget.HasValue)
+                {
+                    decimal totalSpent = projectExpenses.Sum(e => e.Amount);
+                    decimal remaining = project.Budget.Value - totalSpent;
+                    <MudStack Row="true" Spacing="4" Class="mb-5" AlignItems="AlignItems.Center">
+                        <MudText Typo="Typo.body2">
+                            Budget: <strong>@project.Budget.Value.ToString("N0") kr</strong>
+                        </MudText>
+                        <MudText Typo="Typo.body2">
+                            Spent: <strong>@totalSpent.ToString("N0") kr</strong>
+                        </MudText>
+                        <MudText Typo="Typo.body2" Color="@(remaining < 0 ? Color.Error : Color.Success)">
+                            Remaining: <strong>@remaining.ToString("N0") kr</strong>
+                        </MudText>
+                    </MudStack>
+                }
+
+                <MudTable T="ProjectExpenseDto" Items="projectExpenses" Hover="true" Elevation="0">
+                    <HeaderContent>
+                        <MudTh>Date</MudTh>
+                        <MudTh>Description</MudTh>
+                        <MudTh Style="text-align:right">Amount</MudTh>
+                        <MudTh />
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd>@context.Date.ToString("dd MMM yyyy")</MudTd>
+                        <MudTd>@context.Description</MudTd>
+                        <MudTd Style="text-align:right">@context.Amount.ToString("N0") kr</MudTd>
+                        <MudTd>
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
+                                           Color="Color.Error"
+                                           OnClick="@(() => DeleteExpense(context.Id))" />
+                        </MudTd>
+                    </RowTemplate>
+                    <FooterContent>
+                        <MudTd colspan="2"><strong>Total</strong></MudTd>
+                        <MudTd Style="text-align:right"><strong>@projectExpenses.Sum(e => e.Amount).ToString("N0") kr</strong></MudTd>
+                        <MudTd />
+                    </FooterContent>
+                </MudTable>
+            }
+        </MudTabPanel>
+
         <MudTabPanel Text="Links" Icon="@Icons.Material.Filled.Link"
                      Style="padding: 24px; padding-top: 32px;">
             <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add"
@@ -334,6 +420,7 @@ else
     private List<ProjectLinkDto> projectLinks = [];
     private List<ProjectContactDto> projectContacts = [];
     private List<ProjectTimelineEventDto> timelineEvents = [];
+    private List<ProjectExpenseDto> projectExpenses = [];
 
     private DateTime? progressDate = DateTime.Today;
     private string progressNote = string.Empty;
@@ -342,6 +429,10 @@ else
     private DateTime? timelineDate;
     private Guid? timelineDragging;
     private Guid? timelineHovering;
+
+    private string expenseDescription = string.Empty;
+    private decimal? expenseAmount;
+    private DateTime? expenseDate = DateTime.Today;
 
     protected override async Task OnInitializedAsync() => await Load();
 
@@ -353,6 +444,7 @@ else
         projectLinks = await Sender.Send(new GetProjectLinksQuery(Id));
         projectContacts = await Sender.Send(new GetProjectContactsQuery(Id));
         timelineEvents = await Sender.Send(new GetProjectTimelineEventsQuery(Id));
+        projectExpenses = await Sender.Send(new GetProjectExpensesQuery(Id));
     }
 
     private string TimelineItemStyle(Guid id)
@@ -402,9 +494,34 @@ else
         if (r is { Canceled: false }) await Load();
     }
 
+    private async Task ToggleTimelineEvent(Guid eventId)
+    {
+        await Sender.Send(new ToggleTimelineEventCompletionCommand(eventId));
+        await Load();
+    }
+
     private async Task DeleteTimelineEvent(Guid eventId)
     {
         await Sender.Send(new DeleteTimelineEventCommand(eventId));
+        await Load();
+    }
+
+    private async Task AddExpense()
+    {
+        if (string.IsNullOrWhiteSpace(expenseDescription) || expenseAmount is null or <= 0) return;
+        DateOnly date = expenseDate.HasValue
+            ? DateOnly.FromDateTime(expenseDate.Value)
+            : DateOnly.FromDateTime(DateTime.Today);
+        await Sender.Send(new AddProjectExpenseCommand(Id, expenseDescription, expenseAmount.Value, date));
+        expenseDescription = string.Empty;
+        expenseAmount = null;
+        expenseDate = DateTime.Today;
+        await Load();
+    }
+
+    private async Task DeleteExpense(Guid expenseId)
+    {
+        await Sender.Send(new DeleteProjectExpenseCommand(expenseId));
         await Load();
     }
 

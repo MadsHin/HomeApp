@@ -14,7 +14,7 @@ public class GetProjectTimelineEventsHandler(IAppDbContext dbContext)
             .Where(e => e.HomeProjectId == request.ProjectId)
             .OrderBy(e => e.SortOrder)
             .ThenBy(e => e.CreatedAt)
-            .Select(e => new ProjectTimelineEventDto(e.Id, e.Title, e.Date, e.SortOrder))
+            .Select(e => new ProjectTimelineEventDto(e.Id, e.Title, e.Date, e.SortOrder, e.IsCompleted))
             .ToListAsync(cancellationToken);
     }
 }
