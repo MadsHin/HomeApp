@@ -1,5 +1,6 @@
 @page "/gallery"
 @inject ISender Sender
+@inject IDialogService DialogService
 
 <MudText Typo="Typo.h4" Class="mb-6">Photo Gallery</MudText>
 
@@ -25,7 +26,7 @@ else
             @foreach (PhotoDto photo in group.Value)
             {
                 <MudItem xs="12" sm="6" md="3">
-                    <MudCard Elevation="2">
+                    <MudCard Elevation="2" Style="cursor:pointer" @onclick="@(() => OpenPhotoViewer(photo))">
                         <MudCardMedia Image="@($"/uploads/photos/{photo.StoredFileName}")"
                                       Height="180" />
                         @if (photo.Caption is not null)
@@ -43,6 +44,15 @@ else
 
 @code {
     private Dictionary<(Guid Id, string Title), List<PhotoDto>>? photosByProject;
+
+    private async Task OpenPhotoViewer(PhotoDto photo)
+    {
+        DialogParameters<PhotoViewerDialog> parameters = new();
+        parameters.Add(x => x.StoredFileName, photo.StoredFileName);
+        parameters.Add(x => x.Caption, photo.Caption);
+        await DialogService.ShowAsync<PhotoViewerDialog>(string.Empty, parameters,
+            new DialogOptions { MaxWidth = MaxWidth.Large, FullWidth = true, CloseButton = true });
+    }
 
     protected override async Task OnInitializedAsync()
     {

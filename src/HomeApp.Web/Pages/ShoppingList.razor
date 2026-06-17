@@ -1,5 +1,6 @@
 @page "/shopping-list"
 @inject ISender Sender
+@inject IJSRuntime JS
 
 <MudText Typo="Typo.h4" Class="mb-2">Shopping List</MudText>
 <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-6">
@@ -18,6 +19,15 @@ else if (items.Count == 0)
 }
 else
 {
+    <MudButton StartIcon="@(copied ? Icons.Material.Filled.Check : Icons.Material.Filled.ContentCopy)"
+               Color="@(copied ? Color.Success : Color.Default)"
+               Variant="Variant.Outlined"
+               Size="Size.Small"
+               Class="mb-4"
+               OnClick="CopyToClipboard">
+        @(copied ? "Copied!" : "Copy list")
+    </MudButton>
+
     <MudTable T="ShoppingListItemDto" Items="items" Hover="true" Elevation="2">
         <HeaderContent>
             <MudTh>Material</MudTh>
@@ -58,9 +68,33 @@ else
 
 @code {
     private List<ShoppingListItemDto>? items;
+    private bool copied;
 
     protected override async Task OnInitializedAsync()
     {
         items = await Sender.Send(new GetShoppingListQuery());
+    }
+
+    private async Task CopyToClipboard()
+    {
+        if (items is null || items.Count == 0) return;
+
+        var lines = new System.Text.StringBuilder();
+        lines.AppendLine($"Shopping List — {DateTime.Today:dd MMM yyyy}");
+        lines.AppendLine();
+        foreach (ShoppingListItemDto item in items)
+        {
+            string amount = item.Unit is not null
+                ? $"{item.Shortfall.ToString("G29")} {item.Unit}"
+                : item.Shortfall.ToString("G29");
+            string projects = string.Join(", ", item.ProjectNames);
+            lines.AppendLine($"☐ {item.Name} — {amount}  ({projects})");
+        }
+
+        await JS.InvokeVoidAsync("copyToClipboard", lines.ToString());
+        copied = true;
+        StateHasChanged();
+        await Task.Delay(2000);
+        copied = false;
     }
 }

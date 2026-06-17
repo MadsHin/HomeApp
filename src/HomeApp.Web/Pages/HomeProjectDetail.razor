@@ -462,7 +462,7 @@ else
                      Style="padding: 24px; padding-top: 32px;">
             <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-5">
                 <MudFileUpload T="IReadOnlyList<IBrowserFile>" Accept=".jpg,.jpeg,.png,.webp"
-                               FilesChanged="UploadPhotos" @ref="fileUpload" />
+                               FilesChanged="UploadPhotos" @ref="fileUpload" Class="d-none" />
                 <MudButton Variant="Variant.Filled" Color="Color.Primary"
                            StartIcon="@Icons.Material.Filled.Upload"
                            OnClick="@(() => fileUpload!.OpenFilePickerAsync())">
