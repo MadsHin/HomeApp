@@ -13,5 +13,11 @@ public partial class AppDbContext(DbContextOptions<AppDbContext> options) : DbCo
 
         modelBuilder.Entity<HomeProjectMaterial>()
             .HasKey(x => new { x.HomeProjectId, x.MaterialId });
+
+        modelBuilder.Entity<ProjectNotePhoto>()
+            .HasKey(x => new { x.NoteId, x.PhotoId });
+
+        modelBuilder.Entity<HomeProjectTool>()
+            .HasKey(x => new { x.HomeProjectId, x.ToolId });
     }
 }

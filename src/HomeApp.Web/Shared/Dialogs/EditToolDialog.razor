@@ -1,0 +1,89 @@
+@inject ISender Sender
+@inject IDialogService DialogService
+
+<MudDialog>
+    <DialogContent>
+        <MudForm @ref="form">
+            <MudTextField @bind-Value="name" Label="Name" Required="true" Class="mb-4" />
+            <MudTextField @bind-Value="category" Label="Category" Placeholder="power tool, hand tool, measuring…" Class="mb-4" />
+            <MudSelect @bind-Value="status" Label="Status" Class="mb-4">
+                <MudSelectItem Value="ToolStatus.Owned">Owned</MudSelectItem>
+                <MudSelectItem Value="ToolStatus.LentOut">Lent out</MudSelectItem>
+                <MudSelectItem Value="ToolStatus.Borrowed">Borrowed</MudSelectItem>
+                <MudSelectItem Value="ToolStatus.Rented">Rented</MudSelectItem>
+            </MudSelect>
+            @if (status != ToolStatus.Owned)
+            {
+                <MudTextField @bind-Value="statusNote" Label="@StatusNoteLabel" Class="mb-4" />
+            }
+            <MudTextField @bind-Value="notes" Label="Notes" Lines="3" Class="mb-4" />
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                @if (icon is not null)
+                {
+                    <IconDisplay Icon="@icon" Size="Size.Large" Color="Color.Primary" />
+                }
+                <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.EmojiSymbols"
+                           OnClick="PickIcon">
+                    @(icon is null ? "Pick icon" : "Change icon")
+                </MudButton>
+            </MudStack>
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Submit">Save</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = null!;
+    [Parameter] public ToolDto Tool { get; set; } = null!;
+
+    private MudForm form = null!;
+    private string name = string.Empty;
+    private string? category;
+    private string? notes;
+    private string? icon;
+    private ToolStatus status;
+    private string? statusNote;
+
+    protected override void OnInitialized()
+    {
+        name = Tool.Name;
+        category = Tool.Category;
+        notes = Tool.Notes;
+        icon = Tool.Icon;
+        status = Tool.Status;
+        statusNote = Tool.StatusNote;
+    }
+
+    private string StatusNoteLabel => status switch
+    {
+        ToolStatus.LentOut => "Lent to",
+        ToolStatus.Borrowed => "Borrowed from",
+        ToolStatus.Rented => "Rented from",
+        _ => "Note"
+    };
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private async Task PickIcon()
+    {
+        DialogParameters<IconPickerDialog> parameters = new();
+        parameters.Add(x => x.CurrentIcon, icon);
+        IDialogReference d = await DialogService.ShowAsync<IconPickerDialog>("Pick an icon", parameters);
+        DialogResult? r = await d.Result;
+        if (r is { Canceled: false })
+            icon = r.Data as string;
+    }
+
+    private async Task Submit()
+    {
+        await form.ValidateAsync();
+        if (!form.IsValid) return;
+
+        string? note = status == ToolStatus.Owned ? null : statusNote;
+        await Sender.Send(new UpdateToolCommand(Tool.Id, name, category, icon, notes, status, note));
+        MudDialog.Close(DialogResult.Ok(true));
+    }
+}

@@ -142,6 +142,90 @@ else
             }
         </MudTabPanel>
 
+        <MudTabPanel Text="Notes" Icon="@Icons.Material.Filled.StickyNote2"
+                     Style="padding: 24px; padding-top: 32px;">
+            @if (!showAddNoteForm)
+            {
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add"
+                           OnClick="@(() => showAddNoteForm = true)" Class="mb-6">
+                    Add Note
+                </MudButton>
+            }
+            else
+            {
+                <MudPaper Elevation="1" Class="pa-4 mb-6">
+                    <MudText Typo="Typo.subtitle1" Class="mb-3">Add note</MudText>
+                    <MudTextField @bind-Value="noteContent" Label="Note" Lines="3" Class="mb-3" />
+                    @if (projectPhotos.Count > 0)
+                    {
+                        <MudText Typo="Typo.subtitle2" Class="mb-2">Attach photos</MudText>
+                        <MudGrid Class="mb-3">
+                            @foreach (PhotoDto photo in projectPhotos)
+                            {
+                                bool selected = newNotePhotoIds.Contains(photo.Id);
+                                <MudItem xs="3" sm="2">
+                                    <div style="position:relative;cursor:pointer" @onclick="@(() => ToggleNewNotePhoto(photo.Id))">
+                                        <img src="@($"/uploads/photos/{photo.StoredFileName}")"
+                                             style="width:100%;height:64px;object-fit:cover;border-radius:4px;
+                                                    @(selected ? "outline:3px solid #6B2737;" : "opacity:0.5;")" />
+                                        @if (selected)
+                                        {
+                                            <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Primary"
+                                                     Style="position:absolute;top:2px;right:2px;background:white;border-radius:50%;font-size:18px" />
+                                        }
+                                    </div>
+                                </MudItem>
+                            }
+                        </MudGrid>
+                    }
+                    <MudStack Row="true" Spacing="2">
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="AddNote">Add</MudButton>
+                        <MudButton Variant="Variant.Text" OnClick="CancelAddNote">Cancel</MudButton>
+                    </MudStack>
+                </MudPaper>
+            }
+
+            @if (projectNotes.Count == 0)
+            {
+                <MudText Color="Color.Secondary">No notes yet.</MudText>
+            }
+            else
+            {
+                @foreach (ProjectNoteDto note in projectNotes)
+                {
+                    <MudPaper Elevation="1" Class="pa-4 mb-4">
+                        <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Start">
+                            <MudText Style="white-space:pre-wrap;flex:1">@note.Content</MudText>
+                            <MudStack Row="true" Spacing="0">
+                                <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
+                                               Color="Color.Primary"
+                                               OnClick="@(() => OpenEditNoteDialog(note))" />
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
+                                               Color="Color.Error"
+                                               OnClick="@(() => DeleteNote(note.Id))" />
+                            </MudStack>
+                        </MudStack>
+                        @if (note.Photos.Count > 0)
+                        {
+                            <MudGrid Class="mt-3">
+                                @foreach (PhotoDto photo in note.Photos)
+                                {
+                                    <MudItem xs="4" sm="3" md="2">
+                                        <img src="@($"/uploads/photos/{photo.StoredFileName}")"
+                                             style="width:100%;height:80px;object-fit:cover;border-radius:4px;cursor:pointer"
+                                             @onclick="@(() => OpenPhotoViewer(photo))" />
+                                    </MudItem>
+                                }
+                            </MudGrid>
+                        }
+                        <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-2">
+                            @note.CreatedAt.ToLocalTime().ToString("dd MMM yyyy HH:mm")
+                        </MudText>
+                    </MudPaper>
+                }
+            }
+        </MudTabPanel>
+
         <MudTabPanel Text="Materials" Icon="@Icons.Material.Filled.Inventory"
                      Style="padding: 24px; padding-top: 32px;">
             <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add"
@@ -168,7 +252,7 @@ else
                             <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
                                 @if (context.Icon is not null)
                                 {
-                                    <MudIcon Icon="@context.Icon" Size="Size.Small" Color="Color.Primary" />
+                                    <IconDisplay Icon="@context.Icon" Size="Size.Small" Color="Color.Primary" />
                                 }
                                 <MudText>@context.Name</MudText>
                             </MudStack>
@@ -204,6 +288,54 @@ else
                             <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
                                            Color="Color.Error"
                                            OnClick="@(() => RemoveMaterial(context.MaterialId))" />
+                        </MudTd>
+                    </RowTemplate>
+                </MudTable>
+            }
+        </MudTabPanel>
+
+        <MudTabPanel Text="Tools" Icon="@Icons.Material.Filled.Handyman"
+                     Style="padding: 24px; padding-top: 32px;">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add"
+                       OnClick="OpenAddToolDialog" Class="mb-5">
+                Add Tool
+            </MudButton>
+
+            @if (projectTools.Count == 0)
+            {
+                <MudText Color="Color.Secondary">No tools added yet.</MudText>
+            }
+            else
+            {
+                <MudTable T="HomeProjectToolDto" Items="projectTools" Hover="true" Elevation="0">
+                    <HeaderContent>
+                        <MudTh>Tool</MudTh>
+                        <MudTh>Category</MudTh>
+                        <MudTh>Status</MudTh>
+                        <MudTh />
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd>
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                                @if (context.Icon is not null)
+                                {
+                                    <IconDisplay Icon="@context.Icon" Size="Size.Small" Color="Color.Primary" />
+                                }
+                                <MudText>@context.Name</MudText>
+                            </MudStack>
+                        </MudTd>
+                        <MudTd>
+                            <MudText Color="Color.Secondary">@(context.Category ?? "—")</MudText>
+                        </MudTd>
+                        <MudTd>
+                            <MudChip T="string" Size="Size.Small" Color="@ToolStatusColor(context.Status)">
+                                @ToolStatusLabel(context.Status, context.StatusNote)
+                            </MudChip>
+                        </MudTd>
+                        <MudTd>
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
+                                           Color="Color.Error"
+                                           OnClick="@(() => RemoveTool(context.ToolId))" />
                         </MudTd>
                     </RowTemplate>
                 </MudTable>
@@ -328,38 +460,50 @@ else
 
         <MudTabPanel Text="Photos" Icon="@Icons.Material.Filled.PhotoLibrary"
                      Style="padding: 24px; padding-top: 32px;">
-            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="3" Class="mb-5">
-                <MudFileUpload T="IBrowserFile" Accept=".jpg,.jpeg,.png,.webp" FilesChanged="UploadPhoto">
+            <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-5">
+                <MudFileUpload T="IReadOnlyList<IBrowserFile>" Accept=".jpg,.jpeg,.png,.webp"
+                               FilesChanged="UploadPhotos">
                     <ActivatorContent>
                         <MudButton Variant="Variant.Filled" Color="Color.Primary"
                                    StartIcon="@Icons.Material.Filled.Upload">
-                            Upload Photo
+                            Upload Photos
                         </MudButton>
                     </ActivatorContent>
                 </MudFileUpload>
-                <MudTextField @bind-Value="photoCaption" Label="Caption (optional)" Style="max-width:300px" />
+                <MudButtonGroup Variant="Variant.Outlined" Size="Size.Small">
+                    <MudIconButton Icon="@Icons.Material.Filled.GridView"
+                                   Color="@(photoGridView ? Color.Primary : Color.Default)"
+                                   OnClick="@(() => photoGridView = true)" />
+                    <MudIconButton Icon="@Icons.Material.Filled.TableRows"
+                                   Color="@(photoGridView ? Color.Default : Color.Primary)"
+                                   OnClick="@(() => photoGridView = false)" />
+                </MudButtonGroup>
             </MudStack>
 
             @if (projectPhotos.Count == 0)
             {
                 <MudText Color="Color.Secondary">No photos yet.</MudText>
             }
-            else
+            else if (photoGridView)
             {
                 <MudGrid>
                     @foreach (PhotoDto photo in projectPhotos)
                     {
                         <MudItem xs="12" sm="6" md="4">
                             <MudCard Elevation="2">
-                                <MudCardMedia Image="@($"/uploads/photos/{photo.StoredFileName}")"
-                                              Height="200" />
-                                @if (photo.Caption is not null)
-                                {
-                                    <MudCardContent Class="pa-2">
-                                        <MudText Typo="Typo.caption">@photo.Caption</MudText>
-                                    </MudCardContent>
-                                }
+                                <div style="cursor:pointer" @onclick="@(() => OpenPhotoViewer(photo))">
+                                    <MudCardMedia Image="@($"/uploads/photos/{photo.StoredFileName}")"
+                                                  Height="200" />
+                                </div>
+                                <MudCardContent Class="pa-2">
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                        @(photo.Caption ?? "No caption")
+                                    </MudText>
+                                </MudCardContent>
                                 <MudCardActions>
+                                    <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
+                                                   Color="Color.Primary"
+                                                   OnClick="@(() => OpenEditCaptionDialog(photo))" />
                                     <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
                                                    Color="Color.Error"
                                                    OnClick="@(() => DeletePhoto(photo.Id, photo.StoredFileName))" />
@@ -368,6 +512,34 @@ else
                         </MudItem>
                     }
                 </MudGrid>
+            }
+            else
+            {
+                <MudTable T="PhotoDto" Items="projectPhotos" Hover="true" Elevation="0">
+                    <HeaderContent>
+                        <MudTh></MudTh>
+                        <MudTh>Caption</MudTh>
+                        <MudTh>Uploaded</MudTh>
+                        <MudTh />
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd>
+                            <img src="@($"/uploads/photos/{context.StoredFileName}")"
+                                 style="width:64px;height:64px;object-fit:cover;border-radius:4px;cursor:pointer"
+                                 @onclick="@(() => OpenPhotoViewer(context))" />
+                        </MudTd>
+                        <MudTd>@(context.Caption ?? "—")</MudTd>
+                        <MudTd>@context.UploadedAt.ToLocalTime().ToString("dd MMM yyyy")</MudTd>
+                        <MudTd>
+                            <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
+                                           Color="Color.Primary"
+                                           OnClick="@(() => OpenEditCaptionDialog(context))" />
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
+                                           Color="Color.Error"
+                                           OnClick="@(() => DeletePhoto(context.Id, context.StoredFileName))" />
+                        </MudTd>
+                    </RowTemplate>
+                </MudTable>
             }
         </MudTabPanel>
 
@@ -467,7 +639,12 @@ else
     private List<ProjectTimelineEventDto> timelineEvents = [];
     private List<ProjectExpenseDto> projectExpenses = [];
     private List<PhotoDto> projectPhotos = [];
-    private string photoCaption = string.Empty;
+    private bool photoGridView = true;
+    private List<ProjectNoteDto> projectNotes = [];
+    private List<HomeProjectToolDto> projectTools = [];
+    private string noteContent = string.Empty;
+    private HashSet<Guid> newNotePhotoIds = [];
+    private bool showAddNoteForm;
 
     private DateTime? progressDate = DateTime.Today;
     private string progressNote = string.Empty;
@@ -493,6 +670,8 @@ else
         timelineEvents = await Sender.Send(new GetProjectTimelineEventsQuery(Id));
         projectExpenses = await Sender.Send(new GetProjectExpensesQuery(Id));
         projectPhotos = await Sender.Send(new GetProjectPhotosQuery(Id));
+        projectNotes = await Sender.Send(new GetProjectNotesQuery(Id));
+        projectTools = await Sender.Send(new GetProjectToolsQuery(Id));
     }
 
     private string TimelineItemStyle(Guid id)
@@ -573,32 +752,92 @@ else
         await Load();
     }
 
-    private async Task UploadPhoto(IBrowserFile file)
+    private async Task UploadPhotos(IReadOnlyList<IBrowserFile> files)
     {
-        string ext = Path.GetExtension(file.Name);
-        string storedFileName = $"{Guid.NewGuid()}{ext}";
-        string uploadPath = Path.Combine(Env.WebRootPath, "uploads", "photos", storedFileName);
+        string webRoot = Env.WebRootPath ?? Path.Combine(Env.ContentRootPath, "wwwroot");
+        string uploadDir = Path.Combine(webRoot, "uploads", "photos");
+        Directory.CreateDirectory(uploadDir);
 
-        Directory.CreateDirectory(Path.GetDirectoryName(uploadPath)!);
+        foreach (IBrowserFile file in files)
+        {
+            string storedFileName = $"{Guid.NewGuid()}{Path.GetExtension(file.Name)}";
+            string uploadPath = Path.Combine(uploadDir, storedFileName);
 
-        await using FileStream fs = new(uploadPath, FileMode.Create);
-        await file.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024).CopyToAsync(fs);
+            await using FileStream fs = new(uploadPath, FileMode.Create);
+            await file.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024).CopyToAsync(fs);
 
-        await Sender.Send(new AddPhotoCommand(
-            Id,
-            file.Name,
-            storedFileName,
-            string.IsNullOrWhiteSpace(photoCaption) ? null : photoCaption));
+            await Sender.Send(new AddPhotoCommand(Id, file.Name, storedFileName, null));
+        }
 
-        photoCaption = string.Empty;
         await Load();
+    }
+
+    private void ToggleNewNotePhoto(Guid id)
+    {
+        if (!newNotePhotoIds.Add(id))
+            newNotePhotoIds.Remove(id);
+    }
+
+    private async Task AddNote()
+    {
+        if (string.IsNullOrWhiteSpace(noteContent)) return;
+        await Sender.Send(new AddProjectNoteCommand(Id, noteContent, [..newNotePhotoIds]));
+        noteContent = string.Empty;
+        newNotePhotoIds.Clear();
+        showAddNoteForm = false;
+        await Load();
+    }
+
+    private void CancelAddNote()
+    {
+        noteContent = string.Empty;
+        newNotePhotoIds.Clear();
+        showAddNoteForm = false;
+    }
+
+    private async Task OpenEditNoteDialog(ProjectNoteDto note)
+    {
+        DialogParameters<EditProjectNoteDialog> parameters = new();
+        parameters.Add(x => x.NoteId, note.Id);
+        parameters.Add(x => x.InitialContent, note.Content);
+        parameters.Add(x => x.InitialPhotoIds, note.Photos.Select(p => p.Id).ToList());
+        parameters.Add(x => x.AvailablePhotos, projectPhotos);
+        IDialogReference d = await DialogService.ShowAsync<EditProjectNoteDialog>("Edit note", parameters);
+        DialogResult? r = await d.Result;
+        if (r is { Canceled: false }) await Load();
+    }
+
+    private async Task DeleteNote(Guid noteId)
+    {
+        await Sender.Send(new DeleteProjectNoteCommand(noteId));
+        await Load();
+    }
+
+    private async Task OpenPhotoViewer(PhotoDto photo)
+    {
+        DialogParameters<PhotoViewerDialog> parameters = new();
+        parameters.Add(x => x.StoredFileName, photo.StoredFileName);
+        parameters.Add(x => x.Caption, photo.Caption);
+        await DialogService.ShowAsync<PhotoViewerDialog>(string.Empty, parameters,
+            new DialogOptions { MaxWidth = MaxWidth.ExtraExtraLarge, CloseButton = true });
+    }
+
+    private async Task OpenEditCaptionDialog(PhotoDto photo)
+    {
+        DialogParameters<EditPhotoCaptionDialog> parameters = new();
+        parameters.Add(x => x.PhotoId, photo.Id);
+        parameters.Add(x => x.InitialCaption, photo.Caption);
+        IDialogReference d = await DialogService.ShowAsync<EditPhotoCaptionDialog>("Edit caption", parameters);
+        DialogResult? r = await d.Result;
+        if (r is { Canceled: false }) await Load();
     }
 
     private async Task DeletePhoto(Guid photoId, string storedFileName)
     {
         await Sender.Send(new DeletePhotoCommand(photoId));
 
-        string filePath = Path.Combine(Env.WebRootPath, "uploads", "photos", storedFileName);
+        string webRoot = Env.WebRootPath ?? Path.Combine(Env.ContentRootPath, "wwwroot");
+        string filePath = Path.Combine(webRoot, "uploads", "photos", storedFileName);
         if (File.Exists(filePath))
             File.Delete(filePath);
 
@@ -662,6 +901,38 @@ else
         await Sender.Send(new RemoveMaterialFromProjectCommand(Id, materialId));
         await Load();
     }
+
+    private async Task OpenAddToolDialog()
+    {
+        DialogParameters<AddToolToProjectDialog> parameters = new();
+        parameters.Add(x => x.ProjectId, Id);
+        parameters.Add(x => x.ExcludedIds, projectTools.Select(t => t.ToolId).ToList());
+        IDialogReference d = await DialogService.ShowAsync<AddToolToProjectDialog>("Add Tool", parameters);
+        DialogResult? r = await d.Result;
+        if (r is { Canceled: false }) await Load();
+    }
+
+    private async Task RemoveTool(Guid toolId)
+    {
+        await Sender.Send(new RemoveToolFromProjectCommand(Id, toolId));
+        await Load();
+    }
+
+    private static Color ToolStatusColor(ToolStatus status) => status switch
+    {
+        ToolStatus.LentOut  => Color.Warning,
+        ToolStatus.Borrowed => Color.Info,
+        ToolStatus.Rented   => Color.Secondary,
+        _                   => Color.Success
+    };
+
+    private static string ToolStatusLabel(ToolStatus status, string? note) => status switch
+    {
+        ToolStatus.LentOut  => note is not null ? $"Lent to {note}" : "Lent out",
+        ToolStatus.Borrowed => note is not null ? $"Borrowed from {note}" : "Borrowed",
+        ToolStatus.Rented   => note is not null ? $"Rented from {note}" : "Rented",
+        _                   => "Owned"
+    };
 
     private async Task AddProgressEntry()
     {

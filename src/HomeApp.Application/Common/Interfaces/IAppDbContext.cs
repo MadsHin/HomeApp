@@ -17,6 +17,10 @@ public interface IAppDbContext
     DbSet<ProjectLink> ProjectLinks { get; }
     DbSet<ProjectTimelineEvent> ProjectTimelineEvents { get; }
     DbSet<ProjectExpense> ProjectExpenses { get; }
+    DbSet<ProjectNote> ProjectNotes { get; }
+    DbSet<ProjectNotePhoto> ProjectNotePhotos { get; }
+    DbSet<Tool> Tools { get; }
+    DbSet<HomeProjectTool> HomeProjectTools { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

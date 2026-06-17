@@ -15,4 +15,6 @@ public partial class AppDbContext
     public DbSet<Photo> Photos { get; set; }
     public DbSet<ProjectTimelineEvent> ProjectTimelineEvents { get; set; }
     public DbSet<ProjectExpense> ProjectExpenses { get; set; }
+    public DbSet<ProjectNote> ProjectNotes { get; set; }
+    public DbSet<ProjectNotePhoto> ProjectNotePhotos { get; set; }
 }

@@ -1,0 +1,73 @@
+@inject ISender Sender
+
+<MudDialog>
+    <DialogContent>
+        <MudForm @ref="form">
+            <MudSelect T="Guid?" @bind-Value="selectedToolId" Label="Tool" Required="true" Class="mb-2">
+                @foreach (ToolDto t in tools)
+                {
+                    <MudSelectItem Value="@((Guid?)t.Id)">
+                        @if (t.Icon is not null)
+                        {
+                            <IconDisplay Icon="@t.Icon" Size="Size.Small" Class="mr-1" />
+                        }
+                        @t.Name
+                        @if (t.Status != ToolStatus.Owned)
+                        {
+                            <MudChip T="string" Size="Size.Small" Color="@StatusColor(t.Status)" Class="ml-2">
+                                @StatusLabel(t.Status, t.StatusNote)
+                            </MudChip>
+                        }
+                    </MudSelectItem>
+                }
+            </MudSelect>
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Submit">Add</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = null!;
+    [Parameter] public Guid ProjectId { get; set; }
+    [Parameter] public List<Guid> ExcludedIds { get; set; } = [];
+
+    private MudForm form = null!;
+    private Guid? selectedToolId;
+    private List<ToolDto> tools = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        var all = await Sender.Send(new GetToolsQuery());
+        tools = all.Where(t => !ExcludedIds.Contains(t.Id)).ToList();
+    }
+
+    private static Color StatusColor(ToolStatus status) => status switch
+    {
+        ToolStatus.LentOut => Color.Warning,
+        ToolStatus.Borrowed => Color.Info,
+        ToolStatus.Rented => Color.Secondary,
+        _ => Color.Success
+    };
+
+    private static string StatusLabel(ToolStatus status, string? note) => status switch
+    {
+        ToolStatus.LentOut => note is not null ? $"Lent to {note}" : "Lent out",
+        ToolStatus.Borrowed => note is not null ? $"Borrowed from {note}" : "Borrowed",
+        ToolStatus.Rented => note is not null ? $"Rented from {note}" : "Rented",
+        _ => "Owned"
+    };
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private async Task Submit()
+    {
+        await form.ValidateAsync();
+        if (!form.IsValid || selectedToolId is null) return;
+
+        await Sender.Send(new AddToolToProjectCommand(ProjectId, selectedToolId.Value));
+        MudDialog.Close(DialogResult.Ok(true));
+    }
+}

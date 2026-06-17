@@ -1,0 +1,177 @@
+@page "/tools"
+@inject ISender Sender
+@inject IDialogService DialogService
+
+<MudText Typo="Typo.h4" Class="mb-4">Tools</MudText>
+
+<MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add"
+           OnClick="OpenAddDialog" Class="mb-4">
+    Add Tool
+</MudButton>
+
+@if (tools is null)
+{
+    <MudProgressCircular Indeterminate="true" />
+}
+else
+{
+    @if (tools.Any(t => t.Status == ToolStatus.LentOut))
+    {
+        <MudAlert Severity="Severity.Warning" Class="mb-5">
+            <MudText Typo="Typo.subtitle2" Class="mb-1">
+                @tools.Count(t => t.Status == ToolStatus.LentOut) tool@(tools.Count(t => t.Status == ToolStatus.LentOut) == 1 ? " is" : "s are") currently with others
+            </MudText>
+            @foreach (ToolDto t in tools.Where(t => t.Status == ToolStatus.LentOut))
+            {
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                    <MudIcon Icon="@Icons.Material.Filled.ArrowForward" Size="Size.Small" />
+                    <MudText Typo="Typo.body2">
+                        <strong>@t.Name</strong>
+                        @if (t.StatusNote is not null)
+                        {
+                            <span> — @t.StatusNote</span>
+                        }
+                    </MudText>
+                </MudStack>
+            }
+        </MudAlert>
+    }
+
+    @if (tools.Count == 0)
+    {
+        <MudText Typo="Typo.body1" Color="Color.Secondary">No tools yet. Add one to start your inventory.</MudText>
+    }
+    else
+    {
+        <MudGrid>
+            @foreach (ToolDto t in tools)
+            {
+                <MudItem xs="12" sm="6" md="4"
+                         draggable="true"
+                         @ondragstart="@(() => dragging = t.Id)"
+                         @ondragend="@(() => { dragging = null; hovering = null; })"
+                         @ondragenter="@(() => hovering = t.Id)"
+                         @ondragover:preventDefault="true"
+                         @ondrop="@(() => Drop(t.Id))">
+                    <MudCard Elevation="2" Style="@($"height:100%;{CardStyle(t.Id)}")">
+                        <MudCardHeader>
+                            <CardHeaderAvatar>
+                                @if (t.Icon is not null)
+                                {
+                                    <IconDisplay Icon="@t.Icon" Color="Color.Primary" Size="Size.Large" />
+                                }
+                                else
+                                {
+                                    <MudIcon Icon="@Icons.Material.Filled.Handyman" Color="Color.Default" Size="Size.Large" />
+                                }
+                            </CardHeaderAvatar>
+                            <CardHeaderContent>
+                                <MudText Typo="Typo.h6">@t.Name</MudText>
+                                @if (t.Category is not null)
+                                {
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">@t.Category</MudText>
+                                }
+                            </CardHeaderContent>
+                            <CardHeaderActions>
+                                <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary"
+                                               OnClick="@(() => OpenEditDialog(t))" />
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error"
+                                               OnClick="@(() => DeleteTool(t.Id))" />
+                            </CardHeaderActions>
+                        </MudCardHeader>
+                        <MudCardContent>
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                                <MudChip T="string" Size="Size.Small" Color="@StatusColor(t.Status)">
+                                    @StatusLabel(t.Status, t.StatusNote)
+                                </MudChip>
+                            </MudStack>
+                            @if (t.Notes is not null)
+                            {
+                                <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-2">@t.Notes</MudText>
+                            }
+                        </MudCardContent>
+                    </MudCard>
+                </MudItem>
+            }
+        </MudGrid>
+    }
+}
+
+@code {
+    private List<ToolDto>? tools;
+    private Guid? dragging;
+    private Guid? hovering;
+
+    protected override async Task OnInitializedAsync() => await Load();
+
+    private async Task Load() => tools = await Sender.Send(new GetToolsQuery());
+
+    private string CardStyle(Guid id)
+    {
+        if (id == dragging) return "opacity:0.4;cursor:grabbing;transition:opacity 0.15s;";
+        if (id == hovering) return "outline:2px dashed #6B2737;outline-offset:3px;cursor:grab;";
+        return "cursor:grab;";
+    }
+
+    private async Task Drop(Guid targetId)
+    {
+        if (dragging is null || dragging == targetId || tools is null) return;
+
+        ToolDto? draggedItem = tools.FirstOrDefault(t => t.Id == dragging);
+        if (draggedItem is null) return;
+
+        int from = tools.IndexOf(draggedItem);
+        int to   = tools.IndexOf(tools.First(t => t.Id == targetId));
+
+        tools.RemoveAt(from);
+        tools.Insert(to, draggedItem);
+
+        dragging = null;
+        hovering = null;
+
+        await Sender.Send(new ReorderToolsCommand(tools.Select(t => t.Id).ToList()));
+    }
+
+    private static Color StatusColor(ToolStatus status) => status switch
+    {
+        ToolStatus.LentOut  => Color.Warning,
+        ToolStatus.Borrowed => Color.Info,
+        ToolStatus.Rented   => Color.Secondary,
+        _                   => Color.Success
+    };
+
+    private static string StatusLabel(ToolStatus status, string? note) => status switch
+    {
+        ToolStatus.LentOut  => note is not null ? $"Lent to {note}" : "Lent out",
+        ToolStatus.Borrowed => note is not null ? $"Borrowed from {note}" : "Borrowed",
+        ToolStatus.Rented   => note is not null ? $"Rented from {note}" : "Rented",
+        _                   => "Owned"
+    };
+
+    private async Task OpenAddDialog()
+    {
+        IDialogReference d = await DialogService.ShowAsync<AddToolDialog>("Add Tool");
+        DialogResult? r = await d.Result;
+        if (r is { Canceled: false }) await Load();
+    }
+
+    private async Task OpenEditDialog(ToolDto tool)
+    {
+        DialogParameters<EditToolDialog> parameters = new();
+        parameters.Add(x => x.Tool, tool);
+        IDialogReference d = await DialogService.ShowAsync<EditToolDialog>("Edit Tool", parameters);
+        DialogResult? r = await d.Result;
+        if (r is { Canceled: false }) await Load();
+    }
+
+    private async Task DeleteTool(Guid id)
+    {
+        bool? confirmed = await DialogService.ShowMessageBoxAsync("Delete Tool",
+            "Are you sure you want to delete this tool?", yesText: "Delete", cancelText: "Cancel");
+        if (confirmed == true)
+        {
+            await Sender.Send(new DeleteToolCommand(id));
+            await Load();
+        }
+    }
+}
