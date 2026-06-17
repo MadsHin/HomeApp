@@ -38,6 +38,47 @@ a, .btn-link {
     color: red;
 }
 
+@media (max-width: 600px) {
+    /* Tighten main content area */
+    .mud-main-content .mud-container {
+        margin-top: 8px !important;
+        padding-left: 8px !important;
+        padding-right: 8px !important;
+    }
+
+    /* Reduce card padding */
+    .mud-card-content {
+        padding: 8px 12px !important;
+    }
+    .mud-card-header {
+        padding: 8px 12px !important;
+    }
+    .mud-card-actions {
+        padding: 4px 8px !important;
+    }
+
+    /* Tighten grid spacing */
+    .mud-grid {
+        gap: 8px !important;
+    }
+
+    /* Smaller page headings */
+    .mud-typography-h4 {
+        font-size: 1.3rem !important;
+    }
+    .mud-typography-h5 {
+        font-size: 1.1rem !important;
+    }
+    .mud-typography-h6 {
+        font-size: 1rem !important;
+    }
+
+    /* Reduce table cell padding */
+    .mud-table-cell {
+        padding: 6px 8px !important;
+    }
+}
+
 #blazor-error-ui {
     background: lightyellow;
     bottom: 0;
