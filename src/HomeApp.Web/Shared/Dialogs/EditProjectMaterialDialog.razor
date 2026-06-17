@@ -1,0 +1,33 @@
+@inject ISender Sender
+
+<MudDialog>
+    <DialogContent>
+        <MudNumericField @bind-Value="quantityNeeded"
+                         Label="@($"Quantity needed{(Unit is not null ? $" ({Unit})" : string.Empty)}")"
+                         Min="0" />
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Submit">Save</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = null!;
+    [Parameter] public Guid ProjectId { get; set; }
+    [Parameter] public Guid MaterialId { get; set; }
+    [Parameter] public decimal? QuantityNeeded { get; set; }
+    [Parameter] public string? Unit { get; set; }
+
+    private decimal? quantityNeeded;
+
+    protected override void OnInitialized() => quantityNeeded = QuantityNeeded;
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private async Task Submit()
+    {
+        await Sender.Send(new UpdateProjectMaterialQuantityCommand(ProjectId, MaterialId, quantityNeeded));
+        MudDialog.Close(DialogResult.Ok(true));
+    }
+}

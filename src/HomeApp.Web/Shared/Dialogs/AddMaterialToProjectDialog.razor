@@ -46,6 +46,7 @@
 @code {
     [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = null!;
     [Parameter] public Guid ProjectId { get; set; }
+    [Parameter] public List<Guid> ExcludedIds { get; set; } = [];
 
     private MudForm form = null!;
     private Guid? selectedMaterialId;
@@ -55,7 +56,8 @@
 
     protected override async Task OnInitializedAsync()
     {
-        materials = await Sender.Send(new GetMaterialsQuery());
+        var all = await Sender.Send(new GetMaterialsQuery());
+        materials = all.Where(m => !ExcludedIds.Contains(m.Id)).ToList();
     }
 
     private void OnMaterialSelected(Guid? id)
