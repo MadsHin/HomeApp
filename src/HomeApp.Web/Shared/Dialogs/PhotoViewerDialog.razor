@@ -1,0 +1,22 @@
+<MudDialog Style="max-width:90vw">
+    <DialogContent>
+        <img src="@($"/uploads/photos/{StoredFileName}")"
+             alt="@Caption"
+             style="max-width:100%;max-height:80vh;display:block;margin:auto;object-fit:contain;" />
+        @if (Caption is not null)
+        {
+            <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-2 d-block text-center">
+                @Caption
+            </MudText>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="@(() => MudDialog.Close())">Close</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = null!;
+    [Parameter] public string StoredFileName { get; set; } = string.Empty;
+    [Parameter] public string? Caption { get; set; }
+}

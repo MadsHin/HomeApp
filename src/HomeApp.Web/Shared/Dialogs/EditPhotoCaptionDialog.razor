@@ -1,0 +1,29 @@
+@inject ISender Sender
+
+<MudDialog>
+    <DialogContent>
+        <MudTextField @bind-Value="caption" Label="Caption" Clearable="true" />
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Submit">Save</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = null!;
+    [Parameter] public Guid PhotoId { get; set; }
+    [Parameter] public string? InitialCaption { get; set; }
+
+    private string? caption;
+
+    protected override void OnInitialized() => caption = InitialCaption;
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private async Task Submit()
+    {
+        await Sender.Send(new UpdatePhotoCaptionCommand(PhotoId, caption));
+        MudDialog.Close(DialogResult.Ok(true));
+    }
+}

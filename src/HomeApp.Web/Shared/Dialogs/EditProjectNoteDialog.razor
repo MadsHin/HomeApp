@@ -1,0 +1,66 @@
+@inject ISender Sender
+
+<MudDialog Style="min-width:600px">
+    <DialogContent>
+        <MudTextField @bind-Value="content" Label="Note" Lines="4" Class="mb-4" />
+
+        @if (AvailablePhotos.Count > 0)
+        {
+            <MudText Typo="Typo.subtitle2" Class="mb-2">Attach photos</MudText>
+            <MudGrid>
+                @foreach (PhotoDto photo in AvailablePhotos)
+                {
+                    bool selected = selectedPhotoIds.Contains(photo.Id);
+                    <MudItem xs="4" sm="3">
+                        <div style="position:relative;cursor:pointer" @onclick="@(() => TogglePhoto(photo.Id))">
+                            <img src="@($"/uploads/photos/{photo.StoredFileName}")"
+                                 style="width:100%;height:80px;object-fit:cover;border-radius:4px;
+                                        @(selected ? "outline:3px solid #6B2737;" : "opacity:0.5;")" />
+                            @if (selected)
+                            {
+                                <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Primary"
+                                         Style="position:absolute;top:4px;right:4px;background:white;border-radius:50%" />
+                            }
+                        </div>
+                    </MudItem>
+                }
+            </MudGrid>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Submit">Save</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = null!;
+    [Parameter] public Guid NoteId { get; set; }
+    [Parameter] public string InitialContent { get; set; } = string.Empty;
+    [Parameter] public List<Guid> InitialPhotoIds { get; set; } = [];
+    [Parameter] public List<PhotoDto> AvailablePhotos { get; set; } = [];
+
+    private string content = string.Empty;
+    private HashSet<Guid> selectedPhotoIds = [];
+
+    protected override void OnInitialized()
+    {
+        content = InitialContent;
+        selectedPhotoIds = [..InitialPhotoIds];
+    }
+
+    private void TogglePhoto(Guid id)
+    {
+        if (!selectedPhotoIds.Add(id))
+            selectedPhotoIds.Remove(id);
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private async Task Submit()
+    {
+        if (string.IsNullOrWhiteSpace(content)) return;
+        await Sender.Send(new UpdateProjectNoteCommand(NoteId, content, [..selectedPhotoIds]));
+        MudDialog.Close(DialogResult.Ok(true));
+    }
+}
