@@ -14,17 +14,17 @@
 }
 else
 {
-    <MudTable T="FamilyMemberDto" Items="members" Hover="true" Striped="true">
+    <MudTable T="FamilyMemberDto" Items="members" Hover="true" Striped="true" Dense="true">
         <HeaderContent>
             <MudTh>Name</MudTh>
-            <MudTh>Age</MudTh>
-            <MudTh>Phone</MudTh>
+            <MudTh Class="hide-mobile">Age</MudTh>
+            <MudTh Class="hide-mobile">Phone</MudTh>
             <MudTh>Actions</MudTh>
         </HeaderContent>
         <RowTemplate>
             <MudTd>@context.Name</MudTd>
-            <MudTd>@context.Age</MudTd>
-            <MudTd>@(context.PhoneNumber ?? "—")</MudTd>
+            <MudTd Class="hide-mobile">@context.Age</MudTd>
+            <MudTd Class="hide-mobile">@(context.PhoneNumber ?? "—")</MudTd>
             <MudTd>
                 <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" title="Edit"
                                OnClick="@(() => OpenEditDialog(context))" />

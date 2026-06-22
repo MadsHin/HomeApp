@@ -61,568 +61,604 @@ else
         </MudPaper>
     }
 
-    <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true">
+    <MudPaper Elevation="2" Class="mb-2 px-3 py-1">
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+            <MudIcon Icon="@ActiveTabIcon" Color="Color.Primary" />
+            <MudSelect @bind-Value="activeTab" Dense="true" Margin="Margin.Dense"
+                       Variant="Variant.Text" Style="font-weight:600;font-size:1rem;max-width:200px">
+                <MudSelectItem Value="@("Timeline")">Timeline</MudSelectItem>
+                <MudSelectItem Value="@("Notes")">Notes</MudSelectItem>
+                <MudSelectItem Value="@("Materials")">Materials</MudSelectItem>
+                <MudSelectItem Value="@("Tools")">Tools</MudSelectItem>
+                <MudSelectItem Value="@("Progress")">Progress</MudSelectItem>
+                <MudSelectItem Value="@("Expenses")">Expenses</MudSelectItem>
+                <MudSelectItem Value="@("Photos")">Photos</MudSelectItem>
+                <MudSelectItem Value="@("Links")">Links</MudSelectItem>
+                <MudSelectItem Value="@("Contacts")">Contacts</MudSelectItem>
+            </MudSelect>
+        </MudStack>
+    </MudPaper>
 
-        <MudTabPanel Text="Timeline" Icon="@Icons.Material.Filled.Timeline"
-                     Style="padding: 24px; padding-top: 32px;">
-            <MudPaper Elevation="1" Class="pa-4 mb-6">
-                <MudText Typo="Typo.subtitle1" Class="mb-3">Add step</MudText>
-                <MudGrid>
-                    <MudItem xs="12" sm="5">
-                        <MudTextField @bind-Value="timelineTitle" Label="Title" />
-                    </MudItem>
-                    <MudItem xs="12" sm="4">
-                        <MudDatePicker @bind-Date="timelineDate" Label="Date (optional)" Clearable="true" />
-                    </MudItem>
-                    <MudItem xs="12" sm="3" Class="d-flex align-end">
-                        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="AddTimelineEvent">
-                            Add
-                        </MudButton>
-                    </MudItem>
-                </MudGrid>
-            </MudPaper>
+    <MudPaper Elevation="2">
 
-            @if (timelineEvents.Count == 0)
-            {
-                <MudText Color="Color.Secondary">No steps added yet.</MudText>
-            }
-            else
-            {
-                <div class="mb-4">
-                    <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-1">
-                        @timelineEvents.Count(e => e.IsCompleted) of @timelineEvents.Count steps done
-                    </MudText>
-                    <MudProgressLinear Value="@((double)timelineEvents.Count(e => e.IsCompleted) / timelineEvents.Count * 100)"
-                                       Color="Color.Success" Rounded="true" Size="Size.Small" />
-                </div>
-
-                <MudTimeline TimelinePosition="TimelinePosition.Start">
-                    @foreach (ProjectTimelineEventDto ev in timelineEvents)
-                    {
-                        <MudTimelineItem Color="@(ev.IsCompleted ? Color.Success : (ev.Date.HasValue ? Color.Primary : Color.Default))"
-                                         Size="Size.Small"
-                                         draggable="true"
-                                         @ondragstart="@(() => timelineDragging = ev.Id)"
-                                         @ondragend="@(() => { timelineDragging = null; timelineHovering = null; })"
-                                         @ondragenter="@(() => timelineHovering = ev.Id)"
-                                         @ondragover:preventDefault="true"
-                                         @ondrop="@(() => TimelineDrop(ev.Id))"
-                                         Style="@TimelineItemStyle(ev.Id)">
-                            <ItemContent>
-                                <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
-                                    <div>
-                                        <MudText Typo="Typo.body1"
-                                                 Style="@(ev.IsCompleted ? "text-decoration:line-through;opacity:0.6" : string.Empty)">
-                                            @ev.Title
-                                        </MudText>
-                                        @if (ev.Date.HasValue)
-                                        {
-                                            <MudText Typo="Typo.caption" Color="Color.Secondary">
-                                                @ev.Date.Value.ToString("dd MMM yyyy")
-                                            </MudText>
-                                        }
-                                    </div>
-                                    <MudStack Row="true" Spacing="0">
-                                        <MudIconButton Icon="@(ev.IsCompleted ? Icons.Material.Filled.CheckCircle : Icons.Material.Outlined.CheckCircle)"
-                                                       Size="Size.Small" Color="Color.Success"
-                                                       OnClick="@(() => ToggleTimelineEvent(ev.Id))" />
-                                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
-                                                       Color="Color.Primary"
-                                                       OnClick="@(() => OpenEditTimelineEventDialog(ev))" />
-                                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
-                                                       Color="Color.Error"
-                                                       OnClick="@(() => DeleteTimelineEvent(ev.Id))" />
-                                    </MudStack>
-                                </MudStack>
-                            </ItemContent>
-                        </MudTimelineItem>
-                    }
-                </MudTimeline>
-            }
-        </MudTabPanel>
-
-        <MudTabPanel Text="Notes" Icon="@Icons.Material.Filled.StickyNote2"
-                     Style="padding: 24px; padding-top: 32px;">
-            @if (!showAddNoteForm)
-            {
-                <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add"
-                           OnClick="@(() => showAddNoteForm = true)" Class="mb-6">
-                    Add Note
-                </MudButton>
-            }
-            else
-            {
+        @if (activeTab == "Timeline")
+        {
+            <div style="padding: 24px; padding-top: 32px;">
                 <MudPaper Elevation="1" Class="pa-4 mb-6">
-                    <MudText Typo="Typo.subtitle1" Class="mb-3">Add note</MudText>
-                    <MudTextField @bind-Value="noteContent" Label="Note" Lines="3" Class="mb-3" />
-                    @if (projectPhotos.Count > 0)
-                    {
-                        <MudText Typo="Typo.subtitle2" Class="mb-2">Attach photos</MudText>
-                        <MudGrid Class="mb-3">
-                            @foreach (PhotoDto photo in projectPhotos)
-                            {
-                                bool selected = newNotePhotoIds.Contains(photo.Id);
-                                <MudItem xs="3" sm="2">
-                                    <div style="position:relative;cursor:pointer" @onclick="@(() => ToggleNewNotePhoto(photo.Id))">
-                                        <img src="@($"/uploads/photos/{photo.StoredFileName}")"
-                                             style="width:100%;height:64px;object-fit:cover;border-radius:4px;
-                                                    @(selected ? "outline:3px solid #6B2737;" : "opacity:0.5;")" />
-                                        @if (selected)
-                                        {
-                                            <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Primary"
-                                                     Style="position:absolute;top:2px;right:2px;background:white;border-radius:50%;font-size:18px" />
-                                        }
-                                    </div>
-                                </MudItem>
-                            }
-                        </MudGrid>
-                    }
-                    <MudStack Row="true" Spacing="2">
-                        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="AddNote">Add</MudButton>
-                        <MudButton Variant="Variant.Text" OnClick="CancelAddNote">Cancel</MudButton>
-                    </MudStack>
+                    <MudText Typo="Typo.subtitle1" Class="mb-3">Add step</MudText>
+                    <MudGrid>
+                        <MudItem xs="12" sm="5">
+                            <MudTextField @bind-Value="timelineTitle" Label="Title" />
+                        </MudItem>
+                        <MudItem xs="12" sm="4">
+                            <MudDatePicker @bind-Date="timelineDate" Label="Date (optional)" Clearable="true" />
+                        </MudItem>
+                        <MudItem xs="12" sm="3" Class="d-flex align-end">
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="AddTimelineEvent">
+                                Add
+                            </MudButton>
+                        </MudItem>
+                    </MudGrid>
                 </MudPaper>
-            }
 
-            @if (projectNotes.Count == 0)
-            {
-                <MudText Color="Color.Secondary">No notes yet.</MudText>
-            }
-            else
-            {
-                @foreach (ProjectNoteDto note in projectNotes)
+                @if (timelineEvents.Count == 0)
                 {
-                    <MudPaper Elevation="1" Class="pa-4 mb-4">
-                        <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Start">
-                            <MudText Style="white-space:pre-wrap;flex:1">@note.Content</MudText>
-                            <MudStack Row="true" Spacing="0">
-                                <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
-                                               Color="Color.Primary"
-                                               OnClick="@(() => OpenEditNoteDialog(note))" />
-                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
-                                               Color="Color.Error"
-                                               OnClick="@(() => DeleteNote(note.Id))" />
-                            </MudStack>
-                        </MudStack>
-                        @if (note.Photos.Count > 0)
+                    <MudText Color="Color.Secondary">No steps added yet.</MudText>
+                }
+                else
+                {
+                    <div class="mb-4">
+                        <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-1">
+                            @timelineEvents.Count(e => e.IsCompleted) of @timelineEvents.Count steps done
+                        </MudText>
+                        <MudProgressLinear Value="@((double)timelineEvents.Count(e => e.IsCompleted) / timelineEvents.Count * 100)"
+                                           Color="Color.Success" Rounded="true" Size="Size.Small" />
+                    </div>
+
+                    <MudTimeline TimelinePosition="TimelinePosition.Start">
+                        @foreach (ProjectTimelineEventDto ev in timelineEvents)
                         {
-                            <MudGrid Class="mt-3">
-                                @foreach (PhotoDto photo in note.Photos)
+                            <MudTimelineItem Color="@(ev.IsCompleted ? Color.Success : (ev.Date.HasValue ? Color.Primary : Color.Default))"
+                                             Size="Size.Small"
+                                             draggable="true"
+                                             @ondragstart="@(() => timelineDragging = ev.Id)"
+                                             @ondragend="@(() => { timelineDragging = null; timelineHovering = null; })"
+                                             @ondragenter="@(() => timelineHovering = ev.Id)"
+                                             @ondragover:preventDefault="true"
+                                             @ondrop="@(() => TimelineDrop(ev.Id))"
+                                             Style="@TimelineItemStyle(ev.Id)">
+                                <ItemContent>
+                                    <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                                        <div>
+                                            <MudText Typo="Typo.body1"
+                                                     Style="@(ev.IsCompleted ? "text-decoration:line-through;opacity:0.6" : string.Empty)">
+                                                @ev.Title
+                                            </MudText>
+                                            @if (ev.Date.HasValue)
+                                            {
+                                                <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                                    @ev.Date.Value.ToString("dd MMM yyyy")
+                                                </MudText>
+                                            }
+                                        </div>
+                                        <MudStack Row="true" Spacing="0">
+                                            <MudIconButton Icon="@(ev.IsCompleted ? Icons.Material.Filled.CheckCircle : Icons.Material.Outlined.CheckCircle)"
+                                                           Size="Size.Small" Color="Color.Success"
+                                                           OnClick="@(() => ToggleTimelineEvent(ev.Id))" />
+                                            <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
+                                                           Color="Color.Primary"
+                                                           OnClick="@(() => OpenEditTimelineEventDialog(ev))" />
+                                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
+                                                           Color="Color.Error"
+                                                           OnClick="@(() => DeleteTimelineEvent(ev.Id))" />
+                                        </MudStack>
+                                    </MudStack>
+                                </ItemContent>
+                            </MudTimelineItem>
+                        }
+                    </MudTimeline>
+                }
+            </div>
+        }
+
+        @if (activeTab == "Notes")
+        {
+            <div style="padding: 24px; padding-top: 32px;">
+                @if (!showAddNoteForm)
+                {
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add"
+                               OnClick="@(() => showAddNoteForm = true)" Class="mb-6">
+                        Add Note
+                    </MudButton>
+                }
+                else
+                {
+                    <MudPaper Elevation="1" Class="pa-4 mb-6">
+                        <MudText Typo="Typo.subtitle1" Class="mb-3">Add note</MudText>
+                        <MudTextField @bind-Value="noteContent" Label="Note" Lines="3" Class="mb-3" />
+                        @if (projectPhotos.Count > 0)
+                        {
+                            <MudText Typo="Typo.subtitle2" Class="mb-2">Attach photos</MudText>
+                            <MudGrid Class="mb-3">
+                                @foreach (PhotoDto photo in projectPhotos)
                                 {
-                                    <MudItem xs="4" sm="3" md="2">
-                                        <img src="@($"/uploads/photos/{photo.StoredFileName}")"
-                                             style="width:100%;height:80px;object-fit:cover;border-radius:4px;cursor:pointer"
-                                             @onclick="@(() => OpenPhotoViewer(photo))" />
+                                    bool selected = newNotePhotoIds.Contains(photo.Id);
+                                    <MudItem xs="3" sm="2">
+                                        <div style="position:relative;cursor:pointer" @onclick="@(() => ToggleNewNotePhoto(photo.Id))">
+                                            <img src="@($"/uploads/photos/{photo.StoredFileName}")"
+                                                 style="width:100%;height:64px;object-fit:cover;border-radius:4px;
+                                                        @(selected ? "outline:3px solid #6B2737;" : "opacity:0.5;")" />
+                                            @if (selected)
+                                            {
+                                                <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Primary"
+                                                         Style="position:absolute;top:2px;right:2px;background:white;border-radius:50%;font-size:18px" />
+                                            }
+                                        </div>
                                     </MudItem>
                                 }
                             </MudGrid>
                         }
-                        <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-2">
-                            @note.CreatedAt.ToLocalTime().ToString("dd MMM yyyy HH:mm")
-                        </MudText>
+                        <MudStack Row="true" Spacing="2">
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="AddNote">Add</MudButton>
+                            <MudButton Variant="Variant.Text" OnClick="CancelAddNote">Cancel</MudButton>
+                        </MudStack>
                     </MudPaper>
                 }
-            }
-        </MudTabPanel>
 
-        <MudTabPanel Text="Materials" Icon="@Icons.Material.Filled.Inventory"
-                     Style="padding: 24px; padding-top: 32px;">
-            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add"
-                       OnClick="OpenAddMaterialDialog" Class="mb-5">
-                Add Material
-            </MudButton>
-
-            @if (projectMaterials.Count == 0)
-            {
-                <MudText Color="Color.Secondary">No materials added yet.</MudText>
-            }
-            else
-            {
-                <MudTable T="ProjectMaterialDto" Items="projectMaterials" Hover="true" Elevation="0">
-                    <HeaderContent>
-                        <MudTh>Material</MudTh>
-                        <MudTh Style="text-align:right">Needed</MudTh>
-                        <MudTh Style="text-align:right">In stock</MudTh>
-                        <MudTh Style="text-align:center">Coverage</MudTh>
-                        <MudTh />
-                    </HeaderContent>
-                    <RowTemplate>
-                        <MudTd>
-                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
-                                @if (context.Icon is not null)
-                                {
-                                    <IconDisplay Icon="@context.Icon" Size="Size.Small" Color="Color.Primary" />
-                                }
-                                <MudText>@context.Name</MudText>
-                            </MudStack>
-                        </MudTd>
-                        <MudTd Style="text-align:right">
-                            @if (context.QuantityNeeded.HasValue)
-                            {
-                                <MudText>@context.QuantityNeeded.Value.ToString("G29") @context.Unit</MudText>
-                            }
-                            else
-                            {
-                                <MudText Color="Color.Secondary">—</MudText>
-                            }
-                        </MudTd>
-                        <MudTd Style="text-align:right">
-                            @if (context.QuantityInStock.HasValue)
-                            {
-                                <MudText>@context.QuantityInStock.Value.ToString("G29") @context.Unit</MudText>
-                            }
-                            else
-                            {
-                                <MudText Color="Color.Secondary">—</MudText>
-                            }
-                        </MudTd>
-                        <MudTd Style="text-align:center">
-                            @{ (string label, Color color) = StockCoverage(context); }
-                            <MudChip T="string" Size="Size.Small" Color="@color">@label</MudChip>
-                        </MudTd>
-                        <MudTd>
-                            <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
-                                           Color="Color.Primary"
-                                           OnClick="@(() => OpenEditMaterialDialog(context))" />
-                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
-                                           Color="Color.Error"
-                                           OnClick="@(() => RemoveMaterial(context.MaterialId))" />
-                        </MudTd>
-                    </RowTemplate>
-                </MudTable>
-            }
-        </MudTabPanel>
-
-        <MudTabPanel Text="Tools" Icon="@Icons.Material.Filled.Handyman"
-                     Style="padding: 24px; padding-top: 32px;">
-            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add"
-                       OnClick="OpenAddToolDialog" Class="mb-5">
-                Add Tool
-            </MudButton>
-
-            @if (projectTools.Count == 0)
-            {
-                <MudText Color="Color.Secondary">No tools added yet.</MudText>
-            }
-            else
-            {
-                <MudTable T="HomeProjectToolDto" Items="projectTools" Hover="true" Elevation="0">
-                    <HeaderContent>
-                        <MudTh>Tool</MudTh>
-                        <MudTh>Category</MudTh>
-                        <MudTh>Status</MudTh>
-                        <MudTh />
-                    </HeaderContent>
-                    <RowTemplate>
-                        <MudTd>
-                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
-                                @if (context.Icon is not null)
-                                {
-                                    <IconDisplay Icon="@context.Icon" Size="Size.Small" Color="Color.Primary" />
-                                }
-                                <MudText>@context.Name</MudText>
-                            </MudStack>
-                        </MudTd>
-                        <MudTd>
-                            <MudText Color="Color.Secondary">@(context.Category ?? "—")</MudText>
-                        </MudTd>
-                        <MudTd>
-                            <MudChip T="string" Size="Size.Small" Color="@ToolStatusColor(context.Status)">
-                                @ToolStatusLabel(context.Status, context.StatusNote)
-                            </MudChip>
-                        </MudTd>
-                        <MudTd>
-                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
-                                           Color="Color.Error"
-                                           OnClick="@(() => RemoveTool(context.ToolId))" />
-                        </MudTd>
-                    </RowTemplate>
-                </MudTable>
-            }
-        </MudTabPanel>
-
-        <MudTabPanel Text="Progress" Icon="@Icons.Material.Filled.TrendingUp"
-                     Style="padding: 24px; padding-top: 32px;">
-            <MudPaper Elevation="1" Class="pa-4 mb-6">
-                <MudText Typo="Typo.subtitle1" Class="mb-3">Log progress</MudText>
-                <MudGrid>
-                    <MudItem xs="12" sm="4">
-                        <MudDatePicker @bind-Date="progressDate" Label="Date" />
-                    </MudItem>
-                    <MudItem xs="12" sm="6">
-                        <MudTextField @bind-Value="progressNote" Label="Note" />
-                    </MudItem>
-                    <MudItem xs="12" sm="2" Class="d-flex align-end">
-                        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="AddProgressEntry">
-                            Add
-                        </MudButton>
-                    </MudItem>
-                </MudGrid>
-            </MudPaper>
-
-            @if (progressEntries.Count == 0)
-            {
-                <MudText Color="Color.Secondary">No progress logged yet.</MudText>
-            }
-            else
-            {
-                @foreach (ProgressEntryDto entry in progressEntries)
+                @if (projectNotes.Count == 0)
                 {
-                    <MudStack Row="true" AlignItems="AlignItems.Start" Spacing="3" Class="mb-3">
-                        <MudIcon Icon="@Icons.Material.Filled.FiberManualRecord"
-                                 Size="Size.Small" Color="Color.Primary" Style="margin-top:4px" />
-                        <div style="flex:1">
-                            <MudText Typo="Typo.caption" Color="Color.Secondary">
-                                @entry.Date.ToString("dd MMM yyyy")
-                            </MudText>
-                            <MudText>@entry.Note</MudText>
-                        </div>
-                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
-                                       Color="Color.Error"
-                                       OnClick="@(() => DeleteProgressEntry(entry.Id))" />
-                    </MudStack>
-                    <MudDivider Class="mb-3" />
+                    <MudText Color="Color.Secondary">No notes yet.</MudText>
                 }
-            }
-        </MudTabPanel>
-
-        <MudTabPanel Text="Expenses" Icon="@Icons.Material.Filled.Receipt"
-                     Style="padding: 24px; padding-top: 32px;">
-            <MudPaper Elevation="1" Class="pa-4 mb-6">
-                <MudText Typo="Typo.subtitle1" Class="mb-3">Add expense</MudText>
-                <MudGrid>
-                    <MudItem xs="12" sm="4">
-                        <MudTextField @bind-Value="expenseDescription" Label="Description" />
-                    </MudItem>
-                    <MudItem xs="12" sm="3">
-                        <MudNumericField @bind-Value="expenseAmount" Label="Amount (kr)" Min="0" />
-                    </MudItem>
-                    <MudItem xs="12" sm="3">
-                        <MudDatePicker @bind-Date="expenseDate" Label="Date" />
-                    </MudItem>
-                    <MudItem xs="12" sm="2" Class="d-flex align-end">
-                        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="AddExpense">
-                            Add
-                        </MudButton>
-                    </MudItem>
-                </MudGrid>
-            </MudPaper>
-
-            @if (projectExpenses.Count == 0)
-            {
-                <MudText Color="Color.Secondary">No expenses logged yet.</MudText>
-            }
-            else
-            {
-                @if (project!.Budget.HasValue)
+                else
                 {
-                    decimal totalSpent = projectExpenses.Sum(e => e.Amount);
-                    decimal remaining = project.Budget.Value - totalSpent;
-                    <MudStack Row="true" Spacing="4" Class="mb-5" AlignItems="AlignItems.Center">
-                        <MudText Typo="Typo.body2">
-                            Budget: <strong>@project.Budget.Value.ToString("N0") kr</strong>
-                        </MudText>
-                        <MudText Typo="Typo.body2">
-                            Spent: <strong>@totalSpent.ToString("N0") kr</strong>
-                        </MudText>
-                        <MudText Typo="Typo.body2" Color="@(remaining < 0 ? Color.Error : Color.Success)">
-                            Remaining: <strong>@remaining.ToString("N0") kr</strong>
-                        </MudText>
-                    </MudStack>
-                }
-
-                <MudTable T="ProjectExpenseDto" Items="projectExpenses" Hover="true" Elevation="0">
-                    <HeaderContent>
-                        <MudTh>Date</MudTh>
-                        <MudTh>Description</MudTh>
-                        <MudTh Style="text-align:right">Amount</MudTh>
-                        <MudTh />
-                    </HeaderContent>
-                    <RowTemplate>
-                        <MudTd>@context.Date.ToString("dd MMM yyyy")</MudTd>
-                        <MudTd>@context.Description</MudTd>
-                        <MudTd Style="text-align:right">@context.Amount.ToString("N0") kr</MudTd>
-                        <MudTd>
-                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
-                                           Color="Color.Error"
-                                           OnClick="@(() => DeleteExpense(context.Id))" />
-                        </MudTd>
-                    </RowTemplate>
-                    <FooterContent>
-                        <MudTd colspan="2"><strong>Total</strong></MudTd>
-                        <MudTd Style="text-align:right"><strong>@projectExpenses.Sum(e => e.Amount).ToString("N0") kr</strong></MudTd>
-                        <MudTd />
-                    </FooterContent>
-                </MudTable>
-            }
-        </MudTabPanel>
-
-        <MudTabPanel Text="Photos" Icon="@Icons.Material.Filled.PhotoLibrary"
-                     Style="padding: 24px; padding-top: 32px;">
-            <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-5">
-                <MudFileUpload T="IReadOnlyList<IBrowserFile>" Accept=".jpg,.jpeg,.png,.webp"
-                               FilesChanged="UploadPhotos" @ref="fileUpload" Class="d-none" />
-                <MudButton Variant="Variant.Filled" Color="Color.Primary"
-                           StartIcon="@Icons.Material.Filled.Upload"
-                           OnClick="@(() => fileUpload!.OpenFilePickerAsync())">
-                    Upload Photos
-                </MudButton>
-                <MudButtonGroup Variant="Variant.Outlined" Size="Size.Small">
-                    <MudIconButton Icon="@Icons.Material.Filled.GridView"
-                                   Color="@(photoGridView ? Color.Primary : Color.Default)"
-                                   OnClick="@(() => photoGridView = true)" />
-                    <MudIconButton Icon="@Icons.Material.Filled.TableRows"
-                                   Color="@(photoGridView ? Color.Default : Color.Primary)"
-                                   OnClick="@(() => photoGridView = false)" />
-                </MudButtonGroup>
-            </MudStack>
-
-            @if (projectPhotos.Count == 0)
-            {
-                <MudText Color="Color.Secondary">No photos yet.</MudText>
-            }
-            else if (photoGridView)
-            {
-                <MudGrid>
-                    @foreach (PhotoDto photo in projectPhotos)
+                    @foreach (ProjectNoteDto note in projectNotes)
                     {
-                        <MudItem xs="12" sm="6" md="4">
-                            <MudCard Elevation="2">
-                                <div style="cursor:pointer" @onclick="@(() => OpenPhotoViewer(photo))">
-                                    <MudCardMedia Image="@($"/uploads/photos/{photo.StoredFileName}")"
-                                                  Height="200" />
-                                </div>
-                                <MudCardContent Class="pa-2">
-                                    <MudText Typo="Typo.caption" Color="Color.Secondary">
-                                        @(photo.Caption ?? "No caption")
-                                    </MudText>
-                                </MudCardContent>
-                                <MudCardActions>
+                        <MudPaper Elevation="1" Class="pa-4 mb-4">
+                            <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Start">
+                                <MudText Style="white-space:pre-wrap;flex:1">@note.Content</MudText>
+                                <MudStack Row="true" Spacing="0">
                                     <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
                                                    Color="Color.Primary"
-                                                   OnClick="@(() => OpenEditCaptionDialog(photo))" />
+                                                   OnClick="@(() => OpenEditNoteDialog(note))" />
                                     <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
                                                    Color="Color.Error"
-                                                   OnClick="@(() => DeletePhoto(photo.Id, photo.StoredFileName))" />
-                                </MudCardActions>
-                            </MudCard>
-                        </MudItem>
+                                                   OnClick="@(() => DeleteNote(note.Id))" />
+                                </MudStack>
+                            </MudStack>
+                            @if (note.Photos.Count > 0)
+                            {
+                                <MudGrid Class="mt-3">
+                                    @foreach (PhotoDto photo in note.Photos)
+                                    {
+                                        <MudItem xs="4" sm="3" md="2">
+                                            <img src="@($"/uploads/photos/{photo.StoredFileName}")"
+                                                 style="width:100%;height:80px;object-fit:cover;border-radius:4px;cursor:pointer"
+                                                 @onclick="@(() => OpenPhotoViewer(photo))" />
+                                        </MudItem>
+                                    }
+                                </MudGrid>
+                            }
+                            <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-2">
+                                @note.CreatedAt.ToLocalTime().ToString("dd MMM yyyy HH:mm")
+                            </MudText>
+                        </MudPaper>
                     }
-                </MudGrid>
-            }
-            else
-            {
-                <MudTable T="PhotoDto" Items="projectPhotos" Hover="true" Elevation="0">
-                    <HeaderContent>
-                        <MudTh></MudTh>
-                        <MudTh>Caption</MudTh>
-                        <MudTh>Uploaded</MudTh>
-                        <MudTh />
-                    </HeaderContent>
-                    <RowTemplate>
-                        <MudTd>
-                            <img src="@($"/uploads/photos/{context.StoredFileName}")"
-                                 style="width:64px;height:64px;object-fit:cover;border-radius:4px;cursor:pointer"
-                                 @onclick="@(() => OpenPhotoViewer(context))" />
-                        </MudTd>
-                        <MudTd>@(context.Caption ?? "—")</MudTd>
-                        <MudTd>@context.UploadedAt.ToLocalTime().ToString("dd MMM yyyy")</MudTd>
-                        <MudTd>
-                            <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
-                                           Color="Color.Primary"
-                                           OnClick="@(() => OpenEditCaptionDialog(context))" />
+                }
+            </div>
+        }
+
+        @if (activeTab == "Materials")
+        {
+            <div style="padding: 24px; padding-top: 32px;">
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add"
+                           OnClick="OpenAddMaterialDialog" Class="mb-5">
+                    Add Material
+                </MudButton>
+
+                @if (projectMaterials.Count == 0)
+                {
+                    <MudText Color="Color.Secondary">No materials added yet.</MudText>
+                }
+                else
+                {
+                    <MudTable T="ProjectMaterialDto" Items="projectMaterials" Hover="true" Elevation="0">
+                        <HeaderContent>
+                            <MudTh>Material</MudTh>
+                            <MudTh Style="text-align:right">Needed</MudTh>
+                            <MudTh Style="text-align:right">In stock</MudTh>
+                            <MudTh Style="text-align:center">Coverage</MudTh>
+                            <MudTh />
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd>
+                                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                                    @if (context.Icon is not null)
+                                    {
+                                        <IconDisplay Icon="@context.Icon" Size="Size.Small" Color="Color.Primary" />
+                                    }
+                                    <MudText>@context.Name</MudText>
+                                </MudStack>
+                            </MudTd>
+                            <MudTd Style="text-align:right">
+                                @if (context.QuantityNeeded.HasValue)
+                                {
+                                    <MudText>@context.QuantityNeeded.Value.ToString("G29") @context.Unit</MudText>
+                                }
+                                else
+                                {
+                                    <MudText Color="Color.Secondary">—</MudText>
+                                }
+                            </MudTd>
+                            <MudTd Style="text-align:right">
+                                @if (context.QuantityInStock.HasValue)
+                                {
+                                    <MudText>@context.QuantityInStock.Value.ToString("G29") @context.Unit</MudText>
+                                }
+                                else
+                                {
+                                    <MudText Color="Color.Secondary">—</MudText>
+                                }
+                            </MudTd>
+                            <MudTd Style="text-align:center">
+                                @{ (string label, Color color) = StockCoverage(context); }
+                                <MudChip T="string" Size="Size.Small" Color="@color">@label</MudChip>
+                            </MudTd>
+                            <MudTd>
+                                <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
+                                               Color="Color.Primary"
+                                               OnClick="@(() => OpenEditMaterialDialog(context))" />
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
+                                               Color="Color.Error"
+                                               OnClick="@(() => RemoveMaterial(context.MaterialId))" />
+                            </MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                }
+            </div>
+        }
+
+        @if (activeTab == "Tools")
+        {
+            <div style="padding: 24px; padding-top: 32px;">
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add"
+                           OnClick="OpenAddToolDialog" Class="mb-5">
+                    Add Tool
+                </MudButton>
+
+                @if (projectTools.Count == 0)
+                {
+                    <MudText Color="Color.Secondary">No tools added yet.</MudText>
+                }
+                else
+                {
+                    <MudTable T="HomeProjectToolDto" Items="projectTools" Hover="true" Elevation="0">
+                        <HeaderContent>
+                            <MudTh>Tool</MudTh>
+                            <MudTh>Category</MudTh>
+                            <MudTh>Status</MudTh>
+                            <MudTh />
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd>
+                                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                                    @if (context.Icon is not null)
+                                    {
+                                        <IconDisplay Icon="@context.Icon" Size="Size.Small" Color="Color.Primary" />
+                                    }
+                                    <MudText>@context.Name</MudText>
+                                </MudStack>
+                            </MudTd>
+                            <MudTd>
+                                <MudText Color="Color.Secondary">@(context.Category ?? "—")</MudText>
+                            </MudTd>
+                            <MudTd>
+                                <MudChip T="string" Size="Size.Small" Color="@ToolStatusColor(context.Status)">
+                                    @ToolStatusLabel(context.Status, context.StatusNote)
+                                </MudChip>
+                            </MudTd>
+                            <MudTd>
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
+                                               Color="Color.Error"
+                                               OnClick="@(() => RemoveTool(context.ToolId))" />
+                            </MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                }
+            </div>
+        }
+
+        @if (activeTab == "Progress")
+        {
+            <div style="padding: 24px; padding-top: 32px;">
+                <MudPaper Elevation="1" Class="pa-4 mb-6">
+                    <MudText Typo="Typo.subtitle1" Class="mb-3">Log progress</MudText>
+                    <MudGrid>
+                        <MudItem xs="12" sm="4">
+                            <MudDatePicker @bind-Date="progressDate" Label="Date" />
+                        </MudItem>
+                        <MudItem xs="12" sm="6">
+                            <MudTextField @bind-Value="progressNote" Label="Note" />
+                        </MudItem>
+                        <MudItem xs="12" sm="2" Class="d-flex align-end">
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="AddProgressEntry">
+                                Add
+                            </MudButton>
+                        </MudItem>
+                    </MudGrid>
+                </MudPaper>
+
+                @if (progressEntries.Count == 0)
+                {
+                    <MudText Color="Color.Secondary">No progress logged yet.</MudText>
+                }
+                else
+                {
+                    @foreach (ProgressEntryDto entry in progressEntries)
+                    {
+                        <MudStack Row="true" AlignItems="AlignItems.Start" Spacing="3" Class="mb-3">
+                            <MudIcon Icon="@Icons.Material.Filled.FiberManualRecord"
+                                     Size="Size.Small" Color="Color.Primary" Style="margin-top:4px" />
+                            <div style="flex:1">
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                    @entry.Date.ToString("dd MMM yyyy")
+                                </MudText>
+                                <MudText>@entry.Note</MudText>
+                            </div>
                             <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
                                            Color="Color.Error"
-                                           OnClick="@(() => DeletePhoto(context.Id, context.StoredFileName))" />
-                        </MudTd>
-                    </RowTemplate>
-                </MudTable>
-            }
-        </MudTabPanel>
-
-        <MudTabPanel Text="Links" Icon="@Icons.Material.Filled.Link"
-                     Style="padding: 24px; padding-top: 32px;">
-            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add"
-                       OnClick="OpenAddLinkDialog" Class="mb-5">
-                Add Link
-            </MudButton>
-
-            @if (projectLinks.Count == 0)
-            {
-                <MudText Color="Color.Secondary">No links added yet.</MudText>
-            }
-            else
-            {
-                @foreach (ProjectLinkDto link in projectLinks)
-                {
-                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="3" Class="mb-3">
-                        <MudIcon Icon="@Icons.Material.Filled.OpenInNew" Color="Color.Primary" />
-                        <div style="flex:1">
-                            <MudLink Href="@link.Url" Target="_blank" Typo="Typo.body1">@link.Label</MudLink>
-                            <MudText Typo="Typo.caption" Color="Color.Secondary">@link.Url</MudText>
-                        </div>
-                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
-                                       Color="Color.Error"
-                                       OnClick="@(() => DeleteLink(link.Id))" />
-                    </MudStack>
-                    <MudDivider Class="mb-3" />
-                }
-            }
-        </MudTabPanel>
-
-        <MudTabPanel Text="Contacts" Icon="@Icons.Material.Filled.Contacts"
-                     Style="padding: 24px; padding-top: 32px;">
-            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add"
-                       OnClick="OpenAddContactDialog" Class="mb-5">
-                Add Contact
-            </MudButton>
-
-            @if (projectContacts.Count == 0)
-            {
-                <MudText Color="Color.Secondary">No contacts added yet.</MudText>
-            }
-            else
-            {
-                <MudGrid>
-                    @foreach (ProjectContactDto contact in projectContacts)
-                    {
-                        <MudItem xs="12" sm="6" md="4">
-                            <MudCard Elevation="1">
-                                <MudCardContent>
-                                    <MudStack Row="true" AlignItems="AlignItems.Start"
-                                              Justify="Justify.SpaceBetween">
-                                        <div>
-                                            <MudText Typo="Typo.subtitle1">@contact.Name</MudText>
-                                            @if (contact.Role is not null)
-                                            {
-                                                <MudChip T="string" Size="Size.Small" Color="Color.Default"
-                                                         Class="ml-0 mt-1">
-                                                    @contact.Role
-                                                </MudChip>
-                                            }
-                                            @if (contact.Phone is not null)
-                                            {
-                                                <MudStack Row="true" AlignItems="AlignItems.Center"
-                                                          Spacing="1" Class="mt-2">
-                                                    <MudIcon Icon="@Icons.Material.Filled.Phone"
-                                                             Size="Size.Small" Color="Color.Secondary" />
-                                                    <MudText Typo="Typo.body2">@contact.Phone</MudText>
-                                                </MudStack>
-                                            }
-                                        </div>
-                                        <MudIconButton Icon="@Icons.Material.Filled.Delete"
-                                                       Size="Size.Small" Color="Color.Error"
-                                                       OnClick="@(() => RemoveContact(contact.ContactId))" />
-                                    </MudStack>
-                                </MudCardContent>
-                            </MudCard>
-                        </MudItem>
+                                           OnClick="@(() => DeleteProgressEntry(entry.Id))" />
+                        </MudStack>
+                        <MudDivider Class="mb-3" />
                     }
-                </MudGrid>
-            }
-        </MudTabPanel>
+                }
+            </div>
+        }
 
-    </MudTabs>
+        @if (activeTab == "Expenses")
+        {
+            <div style="padding: 24px; padding-top: 32px;">
+                <MudPaper Elevation="1" Class="pa-4 mb-6">
+                    <MudText Typo="Typo.subtitle1" Class="mb-3">Add expense</MudText>
+                    <MudGrid>
+                        <MudItem xs="12" sm="4">
+                            <MudTextField @bind-Value="expenseDescription" Label="Description" />
+                        </MudItem>
+                        <MudItem xs="12" sm="3">
+                            <MudNumericField @bind-Value="expenseAmount" Label="Amount (kr)" Min="0" />
+                        </MudItem>
+                        <MudItem xs="12" sm="3">
+                            <MudDatePicker @bind-Date="expenseDate" Label="Date" />
+                        </MudItem>
+                        <MudItem xs="12" sm="2" Class="d-flex align-end">
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="AddExpense">
+                                Add
+                            </MudButton>
+                        </MudItem>
+                    </MudGrid>
+                </MudPaper>
+
+                @if (projectExpenses.Count == 0)
+                {
+                    <MudText Color="Color.Secondary">No expenses logged yet.</MudText>
+                }
+                else
+                {
+                    @if (project!.Budget.HasValue)
+                    {
+                        decimal totalSpent = projectExpenses.Sum(e => e.Amount);
+                        decimal remaining = project.Budget.Value - totalSpent;
+                        <MudStack Row="true" Spacing="4" Class="mb-5" AlignItems="AlignItems.Center">
+                            <MudText Typo="Typo.body2">
+                                Budget: <strong>@project.Budget.Value.ToString("N0") kr</strong>
+                            </MudText>
+                            <MudText Typo="Typo.body2">
+                                Spent: <strong>@totalSpent.ToString("N0") kr</strong>
+                            </MudText>
+                            <MudText Typo="Typo.body2" Color="@(remaining < 0 ? Color.Error : Color.Success)">
+                                Remaining: <strong>@remaining.ToString("N0") kr</strong>
+                            </MudText>
+                        </MudStack>
+                    }
+
+                    <MudTable T="ProjectExpenseDto" Items="projectExpenses" Hover="true" Elevation="0">
+                        <HeaderContent>
+                            <MudTh>Date</MudTh>
+                            <MudTh>Description</MudTh>
+                            <MudTh Style="text-align:right">Amount</MudTh>
+                            <MudTh />
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd>@context.Date.ToString("dd MMM yyyy")</MudTd>
+                            <MudTd>@context.Description</MudTd>
+                            <MudTd Style="text-align:right">@context.Amount.ToString("N0") kr</MudTd>
+                            <MudTd>
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
+                                               Color="Color.Error"
+                                               OnClick="@(() => DeleteExpense(context.Id))" />
+                            </MudTd>
+                        </RowTemplate>
+                        <FooterContent>
+                            <MudTd colspan="2"><strong>Total</strong></MudTd>
+                            <MudTd Style="text-align:right"><strong>@projectExpenses.Sum(e => e.Amount).ToString("N0") kr</strong></MudTd>
+                            <MudTd />
+                        </FooterContent>
+                    </MudTable>
+                }
+            </div>
+        }
+
+        @if (activeTab == "Photos")
+        {
+            <div style="padding: 24px; padding-top: 32px;">
+                <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-5">
+                    <MudFileUpload T="IReadOnlyList<IBrowserFile>" Accept=".jpg,.jpeg,.png,.webp"
+                                   FilesChanged="UploadPhotos" @ref="fileUpload" Class="d-none" />
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                               StartIcon="@Icons.Material.Filled.Upload"
+                               OnClick="@(() => fileUpload!.OpenFilePickerAsync())">
+                        Upload Photos
+                    </MudButton>
+                    <MudButtonGroup Variant="Variant.Outlined" Size="Size.Small">
+                        <MudIconButton Icon="@Icons.Material.Filled.GridView"
+                                       Color="@(photoGridView ? Color.Primary : Color.Default)"
+                                       OnClick="@(() => photoGridView = true)" />
+                        <MudIconButton Icon="@Icons.Material.Filled.TableRows"
+                                       Color="@(photoGridView ? Color.Default : Color.Primary)"
+                                       OnClick="@(() => photoGridView = false)" />
+                    </MudButtonGroup>
+                </MudStack>
+
+                @if (projectPhotos.Count == 0)
+                {
+                    <MudText Color="Color.Secondary">No photos yet.</MudText>
+                }
+                else if (photoGridView)
+                {
+                    <MudGrid>
+                        @foreach (PhotoDto photo in projectPhotos)
+                        {
+                            <MudItem xs="12" sm="6" md="4">
+                                <MudCard Elevation="2">
+                                    <div style="cursor:pointer" @onclick="@(() => OpenPhotoViewer(photo))">
+                                        <MudCardMedia Image="@($"/uploads/photos/{photo.StoredFileName}")"
+                                                      Height="200" />
+                                    </div>
+                                    <MudCardContent Class="pa-2">
+                                        <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                            @(photo.Caption ?? "No caption")
+                                        </MudText>
+                                    </MudCardContent>
+                                    <MudCardActions>
+                                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
+                                                       Color="Color.Primary"
+                                                       OnClick="@(() => OpenEditCaptionDialog(photo))" />
+                                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
+                                                       Color="Color.Error"
+                                                       OnClick="@(() => DeletePhoto(photo.Id, photo.StoredFileName))" />
+                                    </MudCardActions>
+                                </MudCard>
+                            </MudItem>
+                        }
+                    </MudGrid>
+                }
+                else
+                {
+                    <MudTable T="PhotoDto" Items="projectPhotos" Hover="true" Elevation="0">
+                        <HeaderContent>
+                            <MudTh></MudTh>
+                            <MudTh>Caption</MudTh>
+                            <MudTh>Uploaded</MudTh>
+                            <MudTh />
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd>
+                                <img src="@($"/uploads/photos/{context.StoredFileName}")"
+                                     style="width:64px;height:64px;object-fit:cover;border-radius:4px;cursor:pointer"
+                                     @onclick="@(() => OpenPhotoViewer(context))" />
+                            </MudTd>
+                            <MudTd>@(context.Caption ?? "—")</MudTd>
+                            <MudTd>@context.UploadedAt.ToLocalTime().ToString("dd MMM yyyy")</MudTd>
+                            <MudTd>
+                                <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
+                                               Color="Color.Primary"
+                                               OnClick="@(() => OpenEditCaptionDialog(context))" />
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
+                                               Color="Color.Error"
+                                               OnClick="@(() => DeletePhoto(context.Id, context.StoredFileName))" />
+                            </MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                }
+            </div>
+        }
+
+        @if (activeTab == "Links")
+        {
+            <div style="padding: 24px; padding-top: 32px;">
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add"
+                           OnClick="OpenAddLinkDialog" Class="mb-5">
+                    Add Link
+                </MudButton>
+
+                @if (projectLinks.Count == 0)
+                {
+                    <MudText Color="Color.Secondary">No links added yet.</MudText>
+                }
+                else
+                {
+                    @foreach (ProjectLinkDto link in projectLinks)
+                    {
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="3" Class="mb-3">
+                            <MudIcon Icon="@Icons.Material.Filled.OpenInNew" Color="Color.Primary" />
+                            <div style="flex:1">
+                                <MudLink Href="@link.Url" Target="_blank" Typo="Typo.body1">@link.Label</MudLink>
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">@link.Url</MudText>
+                            </div>
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
+                                           Color="Color.Error"
+                                           OnClick="@(() => DeleteLink(link.Id))" />
+                        </MudStack>
+                        <MudDivider Class="mb-3" />
+                    }
+                }
+            </div>
+        }
+
+        @if (activeTab == "Contacts")
+        {
+            <div style="padding: 24px; padding-top: 32px;">
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add"
+                           OnClick="OpenAddContactDialog" Class="mb-5">
+                    Add Contact
+                </MudButton>
+
+                @if (projectContacts.Count == 0)
+                {
+                    <MudText Color="Color.Secondary">No contacts added yet.</MudText>
+                }
+                else
+                {
+                    <MudGrid>
+                        @foreach (ProjectContactDto contact in projectContacts)
+                        {
+                            <MudItem xs="12" sm="6" md="4">
+                                <MudCard Elevation="1">
+                                    <MudCardContent>
+                                        <MudStack Row="true" AlignItems="AlignItems.Start"
+                                                  Justify="Justify.SpaceBetween">
+                                            <div>
+                                                <MudText Typo="Typo.subtitle1">@contact.Name</MudText>
+                                                @if (contact.Role is not null)
+                                                {
+                                                    <MudChip T="string" Size="Size.Small" Color="Color.Default"
+                                                             Class="ml-0 mt-1">
+                                                        @contact.Role
+                                                    </MudChip>
+                                                }
+                                                @if (contact.Phone is not null)
+                                                {
+                                                    <MudStack Row="true" AlignItems="AlignItems.Center"
+                                                              Spacing="1" Class="mt-2">
+                                                        <MudIcon Icon="@Icons.Material.Filled.Phone"
+                                                                 Size="Size.Small" Color="Color.Secondary" />
+                                                        <MudText Typo="Typo.body2">@contact.Phone</MudText>
+                                                    </MudStack>
+                                                }
+                                            </div>
+                                            <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                                           Size="Size.Small" Color="Color.Error"
+                                                           OnClick="@(() => RemoveContact(contact.ContactId))" />
+                                        </MudStack>
+                                    </MudCardContent>
+                                </MudCard>
+                            </MudItem>
+                        }
+                    </MudGrid>
+                }
+            </div>
+        }
+
+    </MudPaper>
 }
 
 @code {
@@ -643,6 +679,22 @@ else
     private string noteContent = string.Empty;
     private HashSet<Guid> newNotePhotoIds = [];
     private bool showAddNoteForm;
+
+    private string activeTab = "Timeline";
+
+    private string ActiveTabIcon => activeTab switch
+    {
+        "Timeline"  => Icons.Material.Filled.Timeline,
+        "Notes"     => Icons.Material.Filled.StickyNote2,
+        "Materials" => Icons.Material.Filled.Inventory,
+        "Tools"     => Icons.Material.Filled.Handyman,
+        "Progress"  => Icons.Material.Filled.TrendingUp,
+        "Expenses"  => Icons.Material.Filled.Receipt,
+        "Photos"    => Icons.Material.Filled.PhotoLibrary,
+        "Links"     => Icons.Material.Filled.Link,
+        "Contacts"  => Icons.Material.Filled.Contacts,
+        _           => Icons.Material.Filled.Dashboard
+    };
 
     private DateTime? progressDate = DateTime.Today;
     private string progressNote = string.Empty;

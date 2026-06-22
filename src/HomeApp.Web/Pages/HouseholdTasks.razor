@@ -14,20 +14,20 @@
 }
 else
 {
-    <MudTable T="HouseholdTaskDto" Items="tasks" Hover="true" Striped="true">
+    <MudTable T="HouseholdTaskDto" Items="tasks" Hover="true" Striped="true" Dense="true">
         <HeaderContent>
             <MudTh>Title</MudTh>
-            <MudTh>Due Date</MudTh>
-            <MudTh>Recurrence</MudTh>
-            <MudTh>Assigned To</MudTh>
+            <MudTh Class="hide-mobile">Due Date</MudTh>
+            <MudTh Class="hide-mobile">Recurrence</MudTh>
+            <MudTh Class="hide-mobile">Assigned To</MudTh>
             <MudTh>Done</MudTh>
             <MudTh>Actions</MudTh>
         </HeaderContent>
         <RowTemplate>
             <MudTd>@context.Title</MudTd>
-            <MudTd>@(context.DueDate.HasValue ? context.DueDate.Value.ToString("yyyy-MM-dd") : "—")</MudTd>
-            <MudTd>@context.Recurrence</MudTd>
-            <MudTd>@(context.AssignedMemberId.HasValue ? (memberNames.TryGetValue(context.AssignedMemberId.Value, out string? n) ? n : "Assigned") : "—")</MudTd>
+            <MudTd Class="hide-mobile">@(context.DueDate.HasValue ? context.DueDate.Value.ToString("yyyy-MM-dd") : "—")</MudTd>
+            <MudTd Class="hide-mobile">@context.Recurrence</MudTd>
+            <MudTd Class="hide-mobile">@(context.AssignedMemberId.HasValue ? (memberNames.TryGetValue(context.AssignedMemberId.Value, out string? n) ? n : "Assigned") : "—")</MudTd>
             <MudTd><MudCheckBox T="bool" Value="context.IsCompleted" Disabled="true" /></MudTd>
             <MudTd>
                 @if (!context.IsCompleted)
