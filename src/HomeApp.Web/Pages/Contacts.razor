@@ -14,9 +14,16 @@
 }
 else
 {
-    <MudTable T="ContactDto" Items="contacts" Hover="true" Striped="true" Dense="true">
+    <MudTable T="ContactDto" Items="contacts" Hover="true" Striped="true" Dense="true"
+              SortLabel="Sort By" Filter="new Func<ContactDto, bool>(FilterFunc)">
+        <ToolBarContent>
+            <MudSpacer />
+            <MudTextField @bind-Value="searchString" Placeholder="Search" Clearable="true"
+                          Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search"
+                          IconSize="Size.Medium" Class="mt-0" />
+        </ToolBarContent>
         <HeaderContent>
-            <MudTh>Name</MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<ContactDto, object>(x => x.Name)">Name</MudTableSortLabel></MudTh>
             <MudTh Class="hide-mobile">Phone</MudTh>
             <MudTh>Actions</MudTh>
         </HeaderContent>
@@ -35,6 +42,15 @@ else
 
 @code {
     private List<ContactDto>? contacts;
+    private string searchString = "";
+
+    private bool FilterFunc(ContactDto c)
+    {
+        if (string.IsNullOrWhiteSpace(searchString)) return true;
+        if (c.Name.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
+        if (c.Phone?.Contains(searchString, StringComparison.OrdinalIgnoreCase) == true) return true;
+        return false;
+    }
 
     protected override async Task OnInitializedAsync()
     {

@@ -14,10 +14,17 @@
 }
 else
 {
-    <MudTable T="FamilyMemberDto" Items="members" Hover="true" Striped="true" Dense="true">
+    <MudTable T="FamilyMemberDto" Items="members" Hover="true" Striped="true" Dense="true"
+              SortLabel="Sort By" Filter="new Func<FamilyMemberDto, bool>(FilterFunc)">
+        <ToolBarContent>
+            <MudSpacer />
+            <MudTextField @bind-Value="searchString" Placeholder="Search" Clearable="true"
+                          Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search"
+                          IconSize="Size.Medium" Class="mt-0" />
+        </ToolBarContent>
         <HeaderContent>
-            <MudTh>Name</MudTh>
-            <MudTh Class="hide-mobile">Age</MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<FamilyMemberDto, object>(x => x.Name)">Name</MudTableSortLabel></MudTh>
+            <MudTh Class="hide-mobile"><MudTableSortLabel SortBy="new Func<FamilyMemberDto, object>(x => x.Age)">Age</MudTableSortLabel></MudTh>
             <MudTh Class="hide-mobile">Phone</MudTh>
             <MudTh>Actions</MudTh>
         </HeaderContent>
@@ -37,6 +44,15 @@ else
 
 @code {
     private List<FamilyMemberDto>? members;
+    private string searchString = "";
+
+    private bool FilterFunc(FamilyMemberDto m)
+    {
+        if (string.IsNullOrWhiteSpace(searchString)) return true;
+        if (m.Name.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
+        if (m.PhoneNumber?.Contains(searchString, StringComparison.OrdinalIgnoreCase) == true) return true;
+        return false;
+    }
 
     protected override async Task OnInitializedAsync()
     {

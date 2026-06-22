@@ -123,12 +123,19 @@ else
     }
     else
     {
-        <MudTable T="ToolDto" Items="FilteredTools" Hover="true" Elevation="2">
+        <MudTable T="ToolDto" Items="FilteredTools" Hover="true" Elevation="2"
+                  SortLabel="Sort By" Filter="new Func<ToolDto, bool>(FilterFunc)">
+            <ToolBarContent>
+                <MudSpacer />
+                <MudTextField @bind-Value="searchString" Placeholder="Search" Clearable="true"
+                              Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search"
+                              IconSize="Size.Medium" Class="mt-0" />
+            </ToolBarContent>
             <HeaderContent>
-                <MudTh>Tool</MudTh>
-                <MudTh>Category</MudTh>
-                <MudTh>Status</MudTh>
-                <MudTh>Location</MudTh>
+                <MudTh><MudTableSortLabel SortBy="new Func<ToolDto, object>(x => x.Name)">Tool</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel SortBy="new Func<ToolDto, object>(x => x.Category ?? string.Empty)">Category</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel SortBy="new Func<ToolDto, object>(x => x.Status.ToString())">Status</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel SortBy="new Func<ToolDto, object>(x => x.StorageLocationName ?? string.Empty)">Location</MudTableSortLabel></MudTh>
                 <MudTh />
             </HeaderContent>
             <RowTemplate>
@@ -179,9 +186,20 @@ else
     private List<ToolDto>? tools;
     private List<StorageLocationDto> locations = [];
     private Guid? locationFilter;
-    private bool gridView = true;
+    private string searchString = "";
+    private bool gridView = false;
     private Guid? dragging;
     private Guid? hovering;
+
+    private bool FilterFunc(ToolDto t)
+    {
+        if (string.IsNullOrWhiteSpace(searchString)) return true;
+        if (t.Name.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
+        if (t.Category?.Contains(searchString, StringComparison.OrdinalIgnoreCase) == true) return true;
+        if (t.StorageLocationName?.Contains(searchString, StringComparison.OrdinalIgnoreCase) == true) return true;
+        if (t.Notes?.Contains(searchString, StringComparison.OrdinalIgnoreCase) == true) return true;
+        return false;
+    }
 
     private List<ToolDto> FilteredTools => locationFilter.HasValue
         ? (tools?.Where(t => t.StorageLocationId == locationFilter).ToList() ?? [])

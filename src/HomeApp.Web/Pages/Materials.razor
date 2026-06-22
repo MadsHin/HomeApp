@@ -9,6 +9,13 @@
                OnClick="OpenAddDialog">
         Add Material
     </MudButton>
+    <MudSelect @bind-Value="locationFilter" Label="Location" Dense="true" Margin="Margin.Dense"
+               Clearable="true" Style="min-width:180px">
+        @foreach (StorageLocationDto loc in locations)
+        {
+            <MudSelectItem Value="@((Guid?)loc.Id)">@loc.Name</MudSelectItem>
+        }
+    </MudSelect>
     <MudButtonGroup Variant="Variant.Outlined" Size="Size.Small">
         <MudIconButton Icon="@Icons.Material.Filled.GridView"
                        Color="@(gridView ? Color.Primary : Color.Default)"
@@ -30,7 +37,7 @@ else if (materials.Count == 0)
 else if (gridView)
 {
     <MudGrid>
-        @foreach (MaterialDto m in materials)
+        @foreach (MaterialDto m in FilteredMaterials)
         {
             <MudItem xs="12" sm="6" md="4"
                      draggable="true"
@@ -94,11 +101,18 @@ else if (gridView)
 }
 else
 {
-    <MudTable T="MaterialDto" Items="materials" Hover="true" Elevation="2">
+    <MudTable T="MaterialDto" Items="FilteredMaterials" Hover="true" Elevation="2"
+              SortLabel="Sort By" Filter="new Func<MaterialDto, bool>(FilterFunc)">
+        <ToolBarContent>
+            <MudSpacer />
+            <MudTextField @bind-Value="searchString" Placeholder="Search" Clearable="true"
+                          Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search"
+                          IconSize="Size.Medium" Class="mt-0" />
+        </ToolBarContent>
         <HeaderContent>
-            <MudTh>Material</MudTh>
-            <MudTh>Location</MudTh>
-            <MudTh Style="text-align:right">Quantity</MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<MaterialDto, object>(x => x.Name)">Material</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<MaterialDto, object>(x => x.StorageLocationName ?? string.Empty)">Location</MudTableSortLabel></MudTh>
+            <MudTh Style="text-align:right"><MudTableSortLabel SortBy="new Func<MaterialDto, object>(x => x.Quantity ?? 0)">Quantity</MudTableSortLabel></MudTh>
             <MudTh />
         </HeaderContent>
         <RowTemplate>
@@ -155,15 +169,32 @@ else
 
 @code {
     private List<MaterialDto>? materials;
-    private bool gridView = true;
+    private List<StorageLocationDto> locations = [];
+    private Guid? locationFilter;
+    private string searchString = "";
+    private bool gridView = false;
     private Guid? dragging;
     private Guid? hovering;
+
+    private List<MaterialDto> FilteredMaterials => locationFilter.HasValue
+        ? (materials?.Where(m => m.StorageLocationId == locationFilter).ToList() ?? [])
+        : (materials ?? []);
+
+    private bool FilterFunc(MaterialDto m)
+    {
+        if (string.IsNullOrWhiteSpace(searchString)) return true;
+        if (m.Name.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
+        if (m.StorageLocationName?.Contains(searchString, StringComparison.OrdinalIgnoreCase) == true) return true;
+        if (m.Notes?.Contains(searchString, StringComparison.OrdinalIgnoreCase) == true) return true;
+        return false;
+    }
 
     protected override async Task OnInitializedAsync() => await Load();
 
     private async Task Load()
     {
         materials = await Sender.Send(new GetMaterialsQuery());
+        locations = await Sender.Send(new GetStorageLocationsQuery());
     }
 
     private string CardStyle(Guid id)
