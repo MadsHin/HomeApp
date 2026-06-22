@@ -14,6 +14,8 @@ public class UpdateContactHandler(IAppDbContext dbContext) : IRequestHandler<Upd
 
         contact.Name = request.Name;
         contact.Phone = request.Phone;
+        contact.JobTitle = request.JobTitle;
+        contact.Notes = request.Notes;
 
         await dbContext.SaveChangesAsync(cancellationToken);
     }

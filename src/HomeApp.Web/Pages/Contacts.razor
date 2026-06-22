@@ -24,11 +24,19 @@ else
         </ToolBarContent>
         <HeaderContent>
             <MudTh><MudTableSortLabel SortBy="new Func<ContactDto, object>(x => x.Name)">Name</MudTableSortLabel></MudTh>
+            <MudTh Class="hide-mobile"><MudTableSortLabel SortBy="new Func<ContactDto, object>(x => x.JobTitle ?? string.Empty)">Job Title</MudTableSortLabel></MudTh>
             <MudTh Class="hide-mobile">Phone</MudTh>
             <MudTh>Actions</MudTh>
         </HeaderContent>
         <RowTemplate>
-            <MudTd>@context.Name</MudTd>
+            <MudTd>
+                <MudText>@context.Name</MudText>
+                @if (context.Notes is not null)
+                {
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">@context.Notes</MudText>
+                }
+            </MudTd>
+            <MudTd Class="hide-mobile">@(context.JobTitle ?? "—")</MudTd>
             <MudTd Class="hide-mobile">@(context.Phone ?? "—")</MudTd>
             <MudTd>
                 <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" title="Edit"
@@ -48,7 +56,9 @@ else
     {
         if (string.IsNullOrWhiteSpace(searchString)) return true;
         if (c.Name.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
+        if (c.JobTitle?.Contains(searchString, StringComparison.OrdinalIgnoreCase) == true) return true;
         if (c.Phone?.Contains(searchString, StringComparison.OrdinalIgnoreCase) == true) return true;
+        if (c.Notes?.Contains(searchString, StringComparison.OrdinalIgnoreCase) == true) return true;
         return false;
     }
 

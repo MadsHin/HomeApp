@@ -10,7 +10,7 @@ public class GetContactByIdHandler(IAppDbContext dbContext) : IRequestHandler<Ge
     {
         return await dbContext.Contacts
             .Where(c => c.Id == request.Id)
-            .Select(c => new ContactDto(c.Id, c.Name, c.Phone))
+            .Select(c => new ContactDto(c.Id, c.Name, c.Phone, c.JobTitle, c.Notes))
             .FirstOrDefaultAsync(cancellationToken);
     }
 }

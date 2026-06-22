@@ -9,7 +9,7 @@ public class GetContactsHandler(IAppDbContext dbContext) : IRequestHandler<GetCo
     public async Task<List<ContactDto>> Handle(GetContactsQuery request, CancellationToken cancellationToken)
     {
         return await dbContext.Contacts
-            .Select(c => new ContactDto(c.Id, c.Name, c.Phone))
+            .Select(c => new ContactDto(c.Id, c.Name, c.Phone, c.JobTitle, c.Notes))
             .ToListAsync(cancellationToken);
     }
 }

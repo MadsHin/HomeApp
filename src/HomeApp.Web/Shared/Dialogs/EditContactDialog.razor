@@ -4,7 +4,9 @@
     <DialogContent>
         <MudForm @ref="form">
             <MudTextField @bind-Value="name" Label="Name" Required="true" Class="mb-4" />
+            <MudTextField @bind-Value="jobTitle" Label="Job Title" Placeholder="e.g. Carpenter" Class="mb-4" />
             <MudTextField @bind-Value="phone" Label="Phone" Class="mb-4" />
+            <MudTextField @bind-Value="notes" Label="Notes" Lines="3" Class="mb-4" />
         </MudForm>
     </DialogContent>
     <DialogActions>
@@ -19,12 +21,16 @@
 
     private MudForm form = null!;
     private string name = string.Empty;
+    private string? jobTitle;
     private string? phone;
+    private string? notes;
 
     protected override void OnInitialized()
     {
         name = Contact.Name;
+        jobTitle = Contact.JobTitle;
         phone = Contact.Phone;
+        notes = Contact.Notes;
     }
 
     private void Cancel() => MudDialog.Cancel();
@@ -34,7 +40,7 @@
         await form.ValidateAsync();
         if (!form.IsValid) return;
 
-        await Sender.Send(new UpdateContactCommand(Contact.Id, name, phone));
+        await Sender.Send(new UpdateContactCommand(Contact.Id, name, phone, jobTitle, notes));
         MudDialog.Close(DialogResult.Ok(true));
     }
 }

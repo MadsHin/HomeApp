@@ -12,7 +12,9 @@ public class CreateContactHandler(IAppDbContext dbContext) : IRequestHandler<Cre
         {
             Id = Guid.NewGuid(),
             Name = request.Name,
-            Phone = request.Phone
+            Phone = request.Phone,
+            JobTitle = request.JobTitle,
+            Notes = request.Notes
         };
 
         dbContext.Contacts.Add(contact);
