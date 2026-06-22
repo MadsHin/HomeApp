@@ -4,7 +4,8 @@
     <DialogContent>
         <MudForm @ref="form">
             <MudTextField @bind-Value="name" Label="Name" Required="true" Class="mb-4" />
-            <MudNumericField T="int" @bind-Value="age" Label="Age" Min="0" Max="150" Class="mb-4" />
+            <MudDatePicker @bind-Date="birthday" Label="Birthday" DateFormat="yyyy-MM-dd"
+                           MaxDate="DateTime.Today" Class="mb-4" Clearable="true" />
             <MudTextField @bind-Value="phoneNumber" Label="Phone Number" Class="mb-4" />
         </MudForm>
     </DialogContent>
@@ -20,13 +21,13 @@
 
     private MudForm form = null!;
     private string name = string.Empty;
-    private int age;
+    private DateTime? birthday;
     private string? phoneNumber;
 
     protected override void OnInitialized()
     {
         name = Member.Name;
-        age = Member.Age;
+        birthday = Member.Birthday.HasValue ? Member.Birthday.Value.ToDateTime(TimeOnly.MinValue) : null;
         phoneNumber = Member.PhoneNumber;
     }
 
@@ -37,7 +38,8 @@
         await form.ValidateAsync();
         if (!form.IsValid) return;
 
-        await Sender.Send(new UpdateFamilyMemberCommand(Member.Id, name, age, phoneNumber));
+        DateOnly? birthdayValue = birthday.HasValue ? DateOnly.FromDateTime(birthday.Value) : null;
+        await Sender.Send(new UpdateFamilyMemberCommand(Member.Id, name, birthdayValue, phoneNumber));
         MudDialog.Close(DialogResult.Ok(true));
     }
 }

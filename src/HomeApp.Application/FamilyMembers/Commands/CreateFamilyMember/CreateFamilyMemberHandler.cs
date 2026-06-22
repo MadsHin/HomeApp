@@ -12,7 +12,7 @@ public class CreateFamilyMemberHandler(IAppDbContext dbContext) : IRequestHandle
         {
             Id = Guid.NewGuid(),
             Name = request.Name,
-            Age = request.Age,
+            Birthday = request.Birthday,
             PhoneNumber = request.PhoneNumber
         };
 

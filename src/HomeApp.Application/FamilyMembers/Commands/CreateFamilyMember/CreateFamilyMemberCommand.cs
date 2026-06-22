@@ -4,6 +4,6 @@ namespace HomeApp.Application.FamilyMembers.Commands;
 
 public record CreateFamilyMemberCommand(
     string Name,
-    int Age,
+    DateOnly? Birthday,
     string? PhoneNumber
 ) : IRequest<Guid>;

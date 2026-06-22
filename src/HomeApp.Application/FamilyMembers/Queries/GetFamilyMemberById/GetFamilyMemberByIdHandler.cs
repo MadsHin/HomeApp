@@ -10,7 +10,7 @@ public class GetFamilyMemberByIdHandler(IAppDbContext dbContext) : IRequestHandl
     {
         return await dbContext.FamilyMembers
             .Where(m => m.Id == request.Id)
-            .Select(m => new FamilyMemberDto(m.Id, m.Name, m.Age, m.PhoneNumber))
+            .Select(m => new FamilyMemberDto(m.Id, m.Name, m.Birthday, m.PhoneNumber))
             .FirstOrDefaultAsync(cancellationToken);
     }
 }

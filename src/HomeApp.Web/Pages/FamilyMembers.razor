@@ -24,13 +24,22 @@ else
         </ToolBarContent>
         <HeaderContent>
             <MudTh><MudTableSortLabel SortBy="new Func<FamilyMemberDto, object>(x => x.Name)">Name</MudTableSortLabel></MudTh>
-            <MudTh Class="hide-mobile"><MudTableSortLabel SortBy="new Func<FamilyMemberDto, object>(x => x.Age)">Age</MudTableSortLabel></MudTh>
+            <MudTh Class="hide-mobile"><MudTableSortLabel SortBy="new Func<FamilyMemberDto, object>(x => x.Birthday ?? DateOnly.MaxValue)">Birthday</MudTableSortLabel></MudTh>
             <MudTh Class="hide-mobile">Phone</MudTh>
             <MudTh>Actions</MudTh>
         </HeaderContent>
         <RowTemplate>
             <MudTd>@context.Name</MudTd>
-            <MudTd Class="hide-mobile">@context.Age</MudTd>
+            <MudTd Class="hide-mobile">
+                @if (context.Birthday.HasValue)
+                {
+                    <MudText>@context.Birthday.Value.ToString("yyyy-MM-dd") <MudText Inline="true" Typo="Typo.caption" Color="Color.Secondary">(@ComputeAge(context.Birthday) yrs)</MudText></MudText>
+                }
+                else
+                {
+                    <MudText Color="Color.Secondary">—</MudText>
+                }
+            </MudTd>
             <MudTd Class="hide-mobile">@(context.PhoneNumber ?? "—")</MudTd>
             <MudTd>
                 <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" title="Edit"
@@ -46,11 +55,21 @@ else
     private List<FamilyMemberDto>? members;
     private string searchString = "";
 
+    private static int ComputeAge(DateOnly? birthday)
+    {
+        if (birthday is null) return 0;
+        DateOnly today = DateOnly.FromDateTime(DateTime.Today);
+        int age = today.Year - birthday.Value.Year;
+        if (birthday.Value.AddYears(age) > today) age--;
+        return age;
+    }
+
     private bool FilterFunc(FamilyMemberDto m)
     {
         if (string.IsNullOrWhiteSpace(searchString)) return true;
         if (m.Name.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
         if (m.PhoneNumber?.Contains(searchString, StringComparison.OrdinalIgnoreCase) == true) return true;
+        if (m.Birthday.HasValue && m.Birthday.Value.ToString("yyyy-MM-dd").Contains(searchString)) return true;
         return false;
     }
 

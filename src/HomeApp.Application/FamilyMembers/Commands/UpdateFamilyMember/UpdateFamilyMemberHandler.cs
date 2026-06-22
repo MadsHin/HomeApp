@@ -13,7 +13,7 @@ public class UpdateFamilyMemberHandler(IAppDbContext dbContext) : IRequestHandle
             return;
 
         member.Name = request.Name;
-        member.Age = request.Age;
+        member.Birthday = request.Birthday;
         member.PhoneNumber = request.PhoneNumber;
 
         await dbContext.SaveChangesAsync(cancellationToken);
