@@ -11,5 +11,7 @@ public class Tool
     public ToolStatus Status { get; set; } = ToolStatus.Owned;
     public string? StatusNote { get; set; }
     public DateTime CreatedAt { get; set; }
+    public Guid? StorageLocationId { get; set; }
+    public StorageLocation? StorageLocation { get; set; }
     public ICollection<HomeProjectTool> HomeProjects { get; set; } = [];
 }

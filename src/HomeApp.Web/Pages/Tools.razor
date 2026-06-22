@@ -4,10 +4,27 @@
 
 <MudText Typo="Typo.h4" Class="mb-4">Tools</MudText>
 
-<MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add"
-           OnClick="OpenAddDialog" Class="mb-4">
-    Add Tool
-</MudButton>
+<MudStack Row="true" AlignItems="AlignItems.Center" Spacing="3" Wrap="Wrap.Wrap" Class="mb-4">
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add"
+               OnClick="OpenAddDialog">
+        Add Tool
+    </MudButton>
+    <MudSelect @bind-Value="locationFilter" Label="Location" Dense="true" Margin="Margin.Dense"
+               Clearable="true" Style="min-width:180px">
+        @foreach (StorageLocationDto loc in locations)
+        {
+            <MudSelectItem Value="@((Guid?)loc.Id)">@loc.Name</MudSelectItem>
+        }
+    </MudSelect>
+    <MudButtonGroup Variant="Variant.Outlined" Size="Size.Small">
+        <MudIconButton Icon="@Icons.Material.Filled.GridView"
+                       Color="@(gridView ? Color.Primary : Color.Default)"
+                       OnClick="@(() => gridView = true)" />
+        <MudIconButton Icon="@Icons.Material.Filled.TableRows"
+                       Color="@(gridView ? Color.Default : Color.Primary)"
+                       OnClick="@(() => gridView = false)" />
+    </MudButtonGroup>
+</MudStack>
 
 @if (tools is null)
 {
@@ -37,14 +54,16 @@ else
         </MudAlert>
     }
 
-    @if (tools.Count == 0)
+    @if (FilteredTools.Count == 0)
     {
-        <MudText Typo="Typo.body1" Color="Color.Secondary">No tools yet. Add one to start your inventory.</MudText>
+        <MudText Typo="Typo.body1" Color="Color.Secondary">
+            @(locationFilter.HasValue ? "No tools in this location." : "No tools yet. Add one to start your inventory.")
+        </MudText>
     }
-    else
+    else if (gridView)
     {
         <MudGrid>
-            @foreach (ToolDto t in tools)
+            @foreach (ToolDto t in FilteredTools)
             {
                 <MudItem xs="12" sm="6" md="4"
                          draggable="true"
@@ -84,6 +103,13 @@ else
                                 <MudChip T="string" Size="Size.Small" Color="@StatusColor(t.Status)">
                                     @StatusLabel(t.Status, t.StatusNote)
                                 </MudChip>
+                                @if (t.StorageLocationName is not null)
+                                {
+                                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                                        <MudIcon Icon="@Icons.Material.Filled.Warehouse" Size="Size.Small" Color="Color.Secondary" />
+                                        <MudText Typo="Typo.caption" Color="Color.Secondary">@t.StorageLocationName</MudText>
+                                    </MudStack>
+                                }
                             </MudStack>
                             @if (t.Notes is not null)
                             {
@@ -95,16 +121,79 @@ else
             }
         </MudGrid>
     }
+    else
+    {
+        <MudTable T="ToolDto" Items="FilteredTools" Hover="true" Elevation="2">
+            <HeaderContent>
+                <MudTh>Tool</MudTh>
+                <MudTh>Category</MudTh>
+                <MudTh>Status</MudTh>
+                <MudTh>Location</MudTh>
+                <MudTh />
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd>
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                        @if (context.Icon is not null)
+                        {
+                            <IconDisplay Icon="@context.Icon" Size="Size.Small" Color="Color.Primary" />
+                        }
+                        else
+                        {
+                            <MudIcon Icon="@Icons.Material.Filled.Handyman" Size="Size.Small" Color="Color.Default" />
+                        }
+                        <MudText>@context.Name</MudText>
+                    </MudStack>
+                </MudTd>
+                <MudTd><MudText Color="Color.Secondary">@(context.Category ?? "—")</MudText></MudTd>
+                <MudTd>
+                    <MudChip T="string" Size="Size.Small" Color="@StatusColor(context.Status)">
+                        @StatusLabel(context.Status, context.StatusNote)
+                    </MudChip>
+                </MudTd>
+                <MudTd>
+                    @if (context.StorageLocationName is not null)
+                    {
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                            <MudIcon Icon="@Icons.Material.Filled.Warehouse" Size="Size.Small" Color="Color.Secondary" />
+                            <MudText Typo="Typo.body2">@context.StorageLocationName</MudText>
+                        </MudStack>
+                    }
+                    else
+                    {
+                        <MudText Color="Color.Secondary">—</MudText>
+                    }
+                </MudTd>
+                <MudTd>
+                    <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Primary"
+                                   OnClick="@(() => OpenEditDialog(context))" />
+                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error"
+                                   OnClick="@(() => DeleteTool(context.Id))" />
+                </MudTd>
+            </RowTemplate>
+        </MudTable>
+    }
 }
 
 @code {
     private List<ToolDto>? tools;
+    private List<StorageLocationDto> locations = [];
+    private Guid? locationFilter;
+    private bool gridView = true;
     private Guid? dragging;
     private Guid? hovering;
 
+    private List<ToolDto> FilteredTools => locationFilter.HasValue
+        ? (tools?.Where(t => t.StorageLocationId == locationFilter).ToList() ?? [])
+        : (tools ?? []);
+
     protected override async Task OnInitializedAsync() => await Load();
 
-    private async Task Load() => tools = await Sender.Send(new GetToolsQuery());
+    private async Task Load()
+    {
+        tools = await Sender.Send(new GetToolsQuery());
+        locations = await Sender.Send(new GetStorageLocationsQuery());
+    }
 
     private string CardStyle(Guid id)
     {

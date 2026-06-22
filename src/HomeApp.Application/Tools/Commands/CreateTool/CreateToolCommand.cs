@@ -9,5 +9,6 @@ public record CreateToolCommand(
     string? Icon,
     string? Notes,
     ToolStatus Status,
-    string? StatusNote
+    string? StatusNote,
+    Guid? StorageLocationId
 ) : IRequest<Guid>;

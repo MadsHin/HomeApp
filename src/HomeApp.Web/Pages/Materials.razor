@@ -4,9 +4,20 @@
 
 <MudText Typo="Typo.h4" Class="mb-4">Materials Inventory</MudText>
 
-<MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="OpenAddDialog" Class="mb-4">
-    Add Material
-</MudButton>
+<MudStack Row="true" AlignItems="AlignItems.Center" Spacing="3" Wrap="Wrap.Wrap" Class="mb-4">
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add"
+               OnClick="OpenAddDialog">
+        Add Material
+    </MudButton>
+    <MudButtonGroup Variant="Variant.Outlined" Size="Size.Small">
+        <MudIconButton Icon="@Icons.Material.Filled.GridView"
+                       Color="@(gridView ? Color.Primary : Color.Default)"
+                       OnClick="@(() => gridView = true)" />
+        <MudIconButton Icon="@Icons.Material.Filled.TableRows"
+                       Color="@(gridView ? Color.Default : Color.Primary)"
+                       OnClick="@(() => gridView = false)" />
+    </MudButtonGroup>
+</MudStack>
 
 @if (materials is null)
 {
@@ -16,7 +27,7 @@ else if (materials.Count == 0)
 {
     <MudText Typo="Typo.body1" Color="Color.Secondary">No materials yet. Add one to start your inventory.</MudText>
 }
-else
+else if (gridView)
 {
     <MudGrid>
         @foreach (MaterialDto m in materials)
@@ -42,9 +53,12 @@ else
                         </CardHeaderAvatar>
                         <CardHeaderContent>
                             <MudText Typo="Typo.h6">@m.Name</MudText>
-                            @if (m.Location is not null)
+                            @if (m.StorageLocationName is not null)
                             {
-                                <MudText Typo="Typo.caption" Color="Color.Secondary">@m.Location</MudText>
+                                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                                    <MudIcon Icon="@Icons.Material.Filled.Warehouse" Size="Size.Small" Color="Color.Secondary" />
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">@m.StorageLocationName</MudText>
+                                </MudStack>
                             }
                         </CardHeaderContent>
                         <CardHeaderActions>
@@ -78,9 +92,70 @@ else
         }
     </MudGrid>
 }
+else
+{
+    <MudTable T="MaterialDto" Items="materials" Hover="true" Elevation="2">
+        <HeaderContent>
+            <MudTh>Material</MudTh>
+            <MudTh>Location</MudTh>
+            <MudTh Style="text-align:right">Quantity</MudTh>
+            <MudTh />
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd>
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                    @if (context.Icon is not null)
+                    {
+                        <IconDisplay Icon="@context.Icon" Size="Size.Small" Color="Color.Primary" />
+                    }
+                    else
+                    {
+                        <MudIcon Icon="@Icons.Material.Filled.Inventory2" Size="Size.Small" Color="Color.Default" />
+                    }
+                    <MudText>@context.Name</MudText>
+                </MudStack>
+            </MudTd>
+            <MudTd>
+                @if (context.StorageLocationName is not null)
+                {
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                        <MudIcon Icon="@Icons.Material.Filled.Warehouse" Size="Size.Small" Color="Color.Secondary" />
+                        <MudText Typo="Typo.body2">@context.StorageLocationName</MudText>
+                    </MudStack>
+                }
+                else
+                {
+                    <MudText Color="Color.Secondary">—</MudText>
+                }
+            </MudTd>
+            <MudTd Style="text-align:right">
+                <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.FlexEnd" Spacing="2">
+                    <MudText>
+                        @(context.Quantity.HasValue ? context.Quantity.Value.ToString("G29") : "—")
+                        @context.Unit
+                    </MudText>
+                    <MudButtonGroup Variant="Variant.Outlined" Size="Size.Small">
+                        <MudIconButton Icon="@Icons.Material.Filled.Remove"
+                                       Disabled="@(context.Quantity is null or 0)"
+                                       OnClick="@(() => Adjust(context, -1))" />
+                        <MudIconButton Icon="@Icons.Material.Filled.Add"
+                                       OnClick="@(() => Adjust(context, 1))" />
+                    </MudButtonGroup>
+                </MudStack>
+            </MudTd>
+            <MudTd>
+                <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Primary"
+                               OnClick="@(() => OpenEditDialog(context))" />
+                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error"
+                               OnClick="@(() => DeleteMaterial(context.Id))" />
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+}
 
 @code {
     private List<MaterialDto>? materials;
+    private bool gridView = true;
     private Guid? dragging;
     private Guid? hovering;
 

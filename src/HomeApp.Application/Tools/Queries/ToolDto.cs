@@ -10,5 +10,7 @@ public record ToolDto(
     string? Notes,
     int SortOrder,
     ToolStatus Status,
-    string? StatusNote
+    string? StatusNote,
+    Guid? StorageLocationId,
+    string? StorageLocationName
 );

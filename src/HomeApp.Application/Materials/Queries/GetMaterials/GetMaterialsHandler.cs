@@ -11,7 +11,11 @@ public class GetMaterialsHandler(IAppDbContext dbContext) : IRequestHandler<GetM
         return await dbContext.Materials
             .OrderBy(m => m.SortOrder)
             .ThenByDescending(m => m.CreatedAt)
-            .Select(m => new MaterialDto(m.Id, m.Name, m.Quantity, m.Unit, m.Location, m.Notes, m.Icon))
+            .Select(m => new MaterialDto(
+                m.Id, m.Name, m.Quantity, m.Unit,
+                m.StorageLocationId,
+                m.StorageLocation != null ? m.StorageLocation.Name : null,
+                m.Notes, m.Icon))
             .ToListAsync(cancellationToken);
     }
 }

@@ -19,6 +19,7 @@ public interface IAppDbContext
     DbSet<ProjectExpense> ProjectExpenses { get; }
     DbSet<ProjectNote> ProjectNotes { get; }
     DbSet<ProjectNotePhoto> ProjectNotePhotos { get; }
+    DbSet<StorageLocation> StorageLocations { get; }
     DbSet<Tool> Tools { get; }
     DbSet<HomeProjectTool> HomeProjectTools { get; }
 

@@ -13,7 +13,12 @@
                     <MudTextField @bind-Value="unit" Label="Unit" Placeholder="pcs, L, m²…" Class="mb-4" />
                 </MudItem>
             </MudGrid>
-            <MudTextField @bind-Value="location" Label="Storage location" Class="mb-4" />
+            <MudSelect @bind-Value="storageLocationId" Label="Storage location" Clearable="true" Class="mb-4">
+                @foreach (StorageLocationDto loc in locations)
+                {
+                    <MudSelectItem Value="@((Guid?)loc.Id)">@loc.Name</MudSelectItem>
+                }
+            </MudSelect>
             <MudTextField @bind-Value="notes" Label="Notes" Lines="3" Class="mb-4" />
             <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
                 @if (icon is not null)
@@ -41,16 +46,18 @@
     private string name = string.Empty;
     private decimal? quantity;
     private string? unit;
-    private string? location;
+    private Guid? storageLocationId;
     private string? notes;
     private string? icon;
+    private List<StorageLocationDto> locations = [];
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
+        locations = await Sender.Send(new GetStorageLocationsQuery());
         name = Material.Name;
         quantity = Material.Quantity;
         unit = Material.Unit;
-        location = Material.Location;
+        storageLocationId = Material.StorageLocationId;
         notes = Material.Notes;
         icon = Material.Icon;
     }
@@ -72,7 +79,7 @@
         await form.ValidateAsync();
         if (!form.IsValid) return;
 
-        await Sender.Send(new UpdateMaterialCommand(Material.Id, name, quantity, unit, location, notes, icon));
+        await Sender.Send(new UpdateMaterialCommand(Material.Id, name, quantity, unit, storageLocationId, notes, icon));
         MudDialog.Close(DialogResult.Ok(true));
     }
 }

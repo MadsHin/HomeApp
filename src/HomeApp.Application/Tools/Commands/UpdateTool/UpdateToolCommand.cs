@@ -10,5 +10,6 @@ public record UpdateToolCommand(
     string? Icon,
     string? Notes,
     ToolStatus Status,
-    string? StatusNote
+    string? StatusNote,
+    Guid? StorageLocationId
 ) : IRequest;

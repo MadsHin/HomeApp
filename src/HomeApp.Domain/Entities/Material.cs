@@ -6,10 +6,11 @@ public class Material
     public required string Name { get; set; }
     public decimal? Quantity { get; set; }
     public string? Unit { get; set; }
-    public string? Location { get; set; }
     public string? Notes { get; set; }
     public string? Icon { get; set; }
     public int SortOrder { get; set; }
     public DateTime CreatedAt { get; set; }
+    public Guid? StorageLocationId { get; set; }
+    public StorageLocation? StorageLocation { get; set; }
     public ICollection<HomeProjectMaterial> HomeProjects { get; set; } = [];
 }

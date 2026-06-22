@@ -6,6 +6,12 @@
         <MudForm @ref="form">
             <MudTextField @bind-Value="name" Label="Name" Required="true" Class="mb-4" />
             <MudTextField @bind-Value="category" Label="Category" Placeholder="power tool, hand tool, measuring…" Class="mb-4" />
+            <MudSelect @bind-Value="storageLocationId" Label="Storage location" Clearable="true" Class="mb-4">
+                @foreach (StorageLocationDto loc in locations)
+                {
+                    <MudSelectItem Value="@((Guid?)loc.Id)">@loc.Name</MudSelectItem>
+                }
+            </MudSelect>
             <MudSelect @bind-Value="status" Label="Status" Class="mb-4">
                 <MudSelectItem Value="ToolStatus.Owned">Owned</MudSelectItem>
                 <MudSelectItem Value="ToolStatus.LentOut">Lent out</MudSelectItem>
@@ -46,15 +52,19 @@
     private string? icon;
     private ToolStatus status;
     private string? statusNote;
+    private Guid? storageLocationId;
+    private List<StorageLocationDto> locations = [];
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
+        locations = await Sender.Send(new GetStorageLocationsQuery());
         name = Tool.Name;
         category = Tool.Category;
         notes = Tool.Notes;
         icon = Tool.Icon;
         status = Tool.Status;
         statusNote = Tool.StatusNote;
+        storageLocationId = Tool.StorageLocationId;
     }
 
     private string StatusNoteLabel => status switch
@@ -83,7 +93,7 @@
         if (!form.IsValid) return;
 
         string? note = status == ToolStatus.Owned ? null : statusNote;
-        await Sender.Send(new UpdateToolCommand(Tool.Id, name, category, icon, notes, status, note));
+        await Sender.Send(new UpdateToolCommand(Tool.Id, name, category, icon, notes, status, note, storageLocationId));
         MudDialog.Close(DialogResult.Ok(true));
     }
 }

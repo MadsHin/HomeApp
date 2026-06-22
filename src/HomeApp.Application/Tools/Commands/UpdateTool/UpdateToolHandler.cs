@@ -17,6 +17,7 @@ public class UpdateToolHandler(IAppDbContext dbContext) : IRequestHandler<Update
         tool.Notes = request.Notes;
         tool.Status = request.Status;
         tool.StatusNote = request.StatusNote;
+        tool.StorageLocationId = request.StorageLocationId;
 
         await dbContext.SaveChangesAsync(cancellationToken);
     }

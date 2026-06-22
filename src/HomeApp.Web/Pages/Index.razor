@@ -9,32 +9,40 @@
 
 <!-- Summary cards -->
 <MudGrid Class="mb-8">
-    <MudItem xs="12" sm="6" md="3">
-        <MudPaper Class="pa-4 d-flex flex-column align-center" Elevation="2">
-            <MudIcon Icon="@Icons.Material.Filled.Warning" Color="@(OverdueCount > 0 ? Color.Error : Color.Success)" Size="Size.Large" Class="mb-2" />
-            <MudText Typo="Typo.h3" Color="@(OverdueCount > 0 ? Color.Error : Color.Default)">@OverdueCount</MudText>
-            <MudText Typo="Typo.body2" Color="Color.Secondary">Overdue Tasks</MudText>
+    <MudItem xs="12" sm="6" md="3" Class="d-flex">
+        <MudPaper Class="pa-3 d-flex align-center justify-space-between flex-grow-1" Elevation="2">
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                <MudIcon Icon="@Icons.Material.Filled.Warning" Color="@(OverdueCount > 0 ? Color.Error : Color.Success)" />
+                <MudText Typo="Typo.body2" Color="Color.Secondary">Overdue Tasks</MudText>
+            </MudStack>
+            <MudText Typo="Typo.h5" Color="@(OverdueCount > 0 ? Color.Error : Color.Default)">@OverdueCount</MudText>
         </MudPaper>
     </MudItem>
-    <MudItem xs="12" sm="6" md="3">
-        <MudPaper Class="pa-4 d-flex flex-column align-center" Elevation="2">
-            <MudIcon Icon="@Icons.Material.Filled.Today" Color="Color.Primary" Size="Size.Large" Class="mb-2" />
-            <MudText Typo="Typo.h3">@DueThisWeekCount</MudText>
-            <MudText Typo="Typo.body2" Color="Color.Secondary">Due This Week</MudText>
+    <MudItem xs="12" sm="6" md="3" Class="d-flex">
+        <MudPaper Class="pa-3 d-flex align-center justify-space-between flex-grow-1" Elevation="2">
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                <MudIcon Icon="@Icons.Material.Filled.Today" Color="Color.Primary" />
+                <MudText Typo="Typo.body2" Color="Color.Secondary">Due This Week</MudText>
+            </MudStack>
+            <MudText Typo="Typo.h5">@DueThisWeekCount</MudText>
         </MudPaper>
     </MudItem>
-    <MudItem xs="12" sm="6" md="3">
-        <MudPaper Class="pa-4 d-flex flex-column align-center" Elevation="2">
-            <MudIcon Icon="@Icons.Material.Filled.Construction" Color="Color.Warning" Size="Size.Large" Class="mb-2" />
-            <MudText Typo="Typo.h3">@ActiveProjectCount</MudText>
-            <MudText Typo="Typo.body2" Color="Color.Secondary">Active Projects</MudText>
+    <MudItem xs="12" sm="6" md="3" Class="d-flex">
+        <MudPaper Class="pa-3 d-flex align-center justify-space-between flex-grow-1" Elevation="2">
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                <MudIcon Icon="@Icons.Material.Filled.Construction" Color="Color.Warning" />
+                <MudText Typo="Typo.body2" Color="Color.Secondary">Active Projects</MudText>
+            </MudStack>
+            <MudText Typo="Typo.h5">@ActiveProjectCount</MudText>
         </MudPaper>
     </MudItem>
-    <MudItem xs="12" sm="6" md="3">
-        <MudPaper Class="pa-4 d-flex flex-column align-center" Elevation="2">
-            <MudIcon Icon="@Icons.Material.Filled.People" Color="Color.Info" Size="Size.Large" Class="mb-2" />
-            <MudText Typo="Typo.h3">@(familyMembers?.Count ?? 0)</MudText>
-            <MudText Typo="Typo.body2" Color="Color.Secondary">Family Members</MudText>
+    <MudItem xs="12" sm="6" md="3" Class="d-flex">
+        <MudPaper Class="pa-3 d-flex align-center justify-space-between flex-grow-1" Elevation="2">
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                <MudIcon Icon="@Icons.Material.Filled.People" Color="Color.Info" />
+                <MudText Typo="Typo.body2" Color="Color.Secondary">Family Members</MudText>
+            </MudStack>
+            <MudText Typo="Typo.h5">@(familyMembers?.Count ?? 0)</MudText>
         </MudPaper>
     </MudItem>
 </MudGrid>
@@ -43,8 +51,8 @@
 <MudGrid Class="mb-8">
 
     <!-- Overdue tasks -->
-    <MudItem xs="12" md="6">
-        <MudPaper Class="pa-4" Elevation="2">
+    <MudItem xs="12" md="6" Class="d-flex">
+        <MudPaper Class="pa-4 flex-grow-1" Elevation="2">
             <MudText Typo="Typo.h6" Class="mb-3">
                 <MudIcon Icon="@Icons.Material.Filled.ErrorOutline" Color="Color.Error" Class="mr-2" />
                 Overdue
@@ -84,8 +92,8 @@
     </MudItem>
 
     <!-- Due this week -->
-    <MudItem xs="12" md="6">
-        <MudPaper Class="pa-4" Elevation="2">
+    <MudItem xs="12" md="6" Class="d-flex">
+        <MudPaper Class="pa-4 flex-grow-1" Elevation="2">
             <MudText Typo="Typo.h6" Class="mb-3">
                 <MudIcon Icon="@Icons.Material.Filled.CalendarToday" Color="Color.Primary" Class="mr-2" />
                 Due This Week
@@ -243,8 +251,8 @@ else
     <MudGrid Class="mb-8">
         @foreach (HomeProjectDto project in ActiveProjects)
         {
-            <MudItem xs="12" sm="6" md="4">
-                <MudCard Elevation="2">
+            <MudItem xs="12" sm="6" md="4" Class="d-flex">
+                <MudCard Elevation="2" Style="width:100%">
                     <MudCardHeader>
                         <CardHeaderContent>
                             <MudText Typo="Typo.h6">@project.Title</MudText>

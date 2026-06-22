@@ -20,6 +20,7 @@ public class CreateToolHandler(IAppDbContext dbContext) : IRequestHandler<Create
             Notes = request.Notes,
             Status = request.Status,
             StatusNote = request.StatusNote,
+            StorageLocationId = request.StorageLocationId,
             SortOrder = count,
             CreatedAt = DateTime.UtcNow
         };

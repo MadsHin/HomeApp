@@ -10,7 +10,11 @@ public class GetMaterialByIdHandler(IAppDbContext dbContext) : IRequestHandler<G
     {
         return await dbContext.Materials
             .Where(m => m.Id == request.Id)
-            .Select(m => new MaterialDto(m.Id, m.Name, m.Quantity, m.Unit, m.Location, m.Notes, m.Icon))
+            .Select(m => new MaterialDto(
+                m.Id, m.Name, m.Quantity, m.Unit,
+                m.StorageLocationId,
+                m.StorageLocation != null ? m.StorageLocation.Name : null,
+                m.Notes, m.Icon))
             .FirstOrDefaultAsync(cancellationToken);
     }
 }

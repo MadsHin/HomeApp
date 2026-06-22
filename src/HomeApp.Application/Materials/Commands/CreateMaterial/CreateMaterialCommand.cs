@@ -6,7 +6,7 @@ public record CreateMaterialCommand(
     string Name,
     decimal? Quantity,
     string? Unit,
-    string? Location,
+    Guid? StorageLocationId,
     string? Notes,
     string? Icon
 ) : IRequest<Guid>;

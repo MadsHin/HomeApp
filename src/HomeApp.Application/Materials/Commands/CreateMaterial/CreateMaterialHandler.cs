@@ -17,7 +17,7 @@ public class CreateMaterialHandler(IAppDbContext dbContext) : IRequestHandler<Cr
             Name = request.Name,
             Quantity = request.Quantity,
             Unit = request.Unit,
-            Location = request.Location,
+            StorageLocationId = request.StorageLocationId,
             Notes = request.Notes,
             Icon = request.Icon,
             SortOrder = count,

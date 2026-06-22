@@ -1,0 +1,85 @@
+@page "/storage-locations"
+@inject ISender Sender
+@inject IDialogService DialogService
+
+<MudText Typo="Typo.h4" Class="mb-4">Storage Locations</MudText>
+
+<MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add"
+           OnClick="OpenAddDialog" Class="mb-4">
+    Add Location
+</MudButton>
+
+@if (locations is null)
+{
+    <MudProgressCircular Indeterminate="true" />
+}
+else if (locations.Count == 0)
+{
+    <MudText Color="Color.Secondary">No storage locations yet.</MudText>
+}
+else
+{
+    <MudTable T="StorageLocationDto" Items="locations" Hover="true" Elevation="2">
+        <HeaderContent>
+            <MudTh>Name</MudTh>
+            <MudTh>Notes</MudTh>
+            <MudTh />
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd>
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                    <MudIcon Icon="@Icons.Material.Filled.Warehouse" Color="Color.Primary" Size="Size.Small" />
+                    <MudText>@context.Name</MudText>
+                </MudStack>
+            </MudTd>
+            <MudTd>
+                <MudText Color="Color.Secondary">@(context.Notes ?? "—")</MudText>
+            </MudTd>
+            <MudTd>
+                <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small"
+                               OnClick="@(() => OpenEditDialog(context))" />
+                <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small"
+                               OnClick="@(() => DeleteLocation(context.Id))" />
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+}
+
+@code {
+    private List<StorageLocationDto>? locations;
+
+    protected override async Task OnInitializedAsync() => await Load();
+
+    private async Task Load()
+    {
+        locations = await Sender.Send(new GetStorageLocationsQuery());
+    }
+
+    private async Task OpenAddDialog()
+    {
+        IDialogReference d = await DialogService.ShowAsync<AddStorageLocationDialog>("Add Location");
+        DialogResult? r = await d.Result;
+        if (r is { Canceled: false }) await Load();
+    }
+
+    private async Task OpenEditDialog(StorageLocationDto location)
+    {
+        DialogParameters<EditStorageLocationDialog> parameters = new();
+        parameters.Add(x => x.Location, location);
+        IDialogReference d = await DialogService.ShowAsync<EditStorageLocationDialog>("Edit Location", parameters);
+        DialogResult? r = await d.Result;
+        if (r is { Canceled: false }) await Load();
+    }
+
+    private async Task DeleteLocation(Guid id)
+    {
+        bool? confirmed = await DialogService.ShowMessageBoxAsync("Delete Location",
+            "This will unlink tools and materials using this location. Continue?",
+            yesText: "Delete", cancelText: "Cancel");
+        if (confirmed == true)
+        {
+            await Sender.Send(new DeleteStorageLocationCommand(id));
+            await Load();
+        }
+    }
+}

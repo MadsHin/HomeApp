@@ -15,7 +15,7 @@ public class UpdateMaterialHandler(IAppDbContext dbContext) : IRequestHandler<Up
         material.Name = request.Name;
         material.Quantity = request.Quantity;
         material.Unit = request.Unit;
-        material.Location = request.Location;
+        material.StorageLocationId = request.StorageLocationId;
         material.Notes = request.Notes;
         material.Icon = request.Icon;
 

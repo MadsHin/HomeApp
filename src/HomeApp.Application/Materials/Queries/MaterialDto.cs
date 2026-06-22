@@ -5,7 +5,8 @@ public record MaterialDto(
     string Name,
     decimal? Quantity,
     string? Unit,
-    string? Location,
+    Guid? StorageLocationId,
+    string? StorageLocationName,
     string? Notes,
     string? Icon
 );
