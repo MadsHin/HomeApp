@@ -10,7 +10,7 @@ public interface IAppDbContext
     DbSet<HomeProject> HomeProjects { get; }
     DbSet<HomeProjectContact> HomeProjectContacts { get; }
     DbSet<HomeProjectMaterial> HomeProjectMaterials { get; }
-    DbSet<HouseholdTask> HouseholdTasks { get; }
+    DbSet<MaintenanceTask> MaintenanceTasks { get; }
     DbSet<Material> Materials { get; }
     DbSet<Photo> Photos { get; }
     DbSet<ProgressEntry> ProgressEntries { get; }

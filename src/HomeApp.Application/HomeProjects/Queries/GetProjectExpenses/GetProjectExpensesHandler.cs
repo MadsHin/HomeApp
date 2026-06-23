@@ -14,7 +14,7 @@ public class GetProjectExpensesHandler(IAppDbContext dbContext)
             .Where(e => e.HomeProjectId == request.ProjectId)
             .OrderByDescending(e => e.Date)
             .ThenByDescending(e => e.CreatedAt)
-            .Select(e => new ProjectExpenseDto(e.Id, e.Description, e.Amount, e.Date))
+            .Select(e => new ProjectExpenseDto(e.Id, e.Description, e.Amount, e.Date, e.Category))
             .ToListAsync(cancellationToken);
     }
 }

@@ -13,6 +13,7 @@
                     <MudTextField @bind-Value="unit" Label="Unit" Placeholder="pcs, L, m²…" Class="mb-4" />
                 </MudItem>
             </MudGrid>
+            <MudNumericField @bind-Value="unitPrice" Label="Price per unit (kr)" Min="0" Class="mb-4" />
             <MudSelect @bind-Value="storageLocationId" Label="Storage location" Clearable="true" Class="mb-4">
                 @foreach (StorageLocationDto loc in locations)
                 {
@@ -45,6 +46,7 @@
     private string name = string.Empty;
     private decimal? quantity;
     private string? unit;
+    private decimal? unitPrice;
     private Guid? storageLocationId;
     private string? notes;
     private string? icon;
@@ -72,7 +74,7 @@
         await form.ValidateAsync();
         if (!form.IsValid) return;
 
-        await Sender.Send(new CreateMaterialCommand(name, quantity, unit, storageLocationId, notes, icon));
+        await Sender.Send(new CreateMaterialCommand(name, quantity, unit, storageLocationId, notes, icon, unitPrice));
         MudDialog.Close(DialogResult.Ok(true));
     }
 }

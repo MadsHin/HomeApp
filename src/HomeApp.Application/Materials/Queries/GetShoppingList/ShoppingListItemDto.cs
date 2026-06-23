@@ -7,5 +7,6 @@ public record ShoppingListItemDto(
     decimal TotalNeeded,
     decimal? InStock,
     decimal Shortfall,
-    List<string> ProjectNames
+    List<string> ProjectNames,
+    decimal? EstimatedCost
 );

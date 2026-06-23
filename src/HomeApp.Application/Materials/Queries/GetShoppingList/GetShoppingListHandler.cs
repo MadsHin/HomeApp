@@ -19,17 +19,19 @@ public class GetShoppingListHandler(IAppDbContext dbContext) : IRequestHandler<G
                     x.m.Name,
                     x.m.Unit,
                     x.m.Quantity,
+                    x.m.UnitPrice,
                     QuantityNeeded = x.hpm.QuantityNeeded!.Value,
                     ProjectTitle = p.Title
                 })
             .ToListAsync(cancellationToken);
 
         return rows
-            .GroupBy(x => new { x.Id, x.Name, x.Unit, x.Quantity })
+            .GroupBy(x => new { x.Id, x.Name, x.Unit, x.Quantity, x.UnitPrice })
             .Select(g =>
             {
                 decimal totalNeeded = g.Sum(x => x.QuantityNeeded);
                 decimal shortfall = Math.Max(0, totalNeeded - (g.Key.Quantity ?? 0));
+                decimal? estimatedCost = g.Key.UnitPrice.HasValue ? shortfall * g.Key.UnitPrice.Value : null;
                 return new ShoppingListItemDto(
                     g.Key.Id,
                     g.Key.Name,
@@ -37,7 +39,8 @@ public class GetShoppingListHandler(IAppDbContext dbContext) : IRequestHandler<G
                     totalNeeded,
                     g.Key.Quantity,
                     shortfall,
-                    g.Select(x => x.ProjectTitle).Distinct().OrderBy(t => t).ToList()
+                    g.Select(x => x.ProjectTitle).Distinct().OrderBy(t => t).ToList(),
+                    estimatedCost
                 );
             })
             .Where(x => x.Shortfall > 0)

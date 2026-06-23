@@ -3,6 +3,7 @@ using System;
 using HomeApp.Infrastructure.Persistance;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace HomeApp.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260623103909_AddExpenseCategoryUnitPriceMaintenance")]
+    partial class AddExpenseCategoryUnitPriceMaintenance
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -65,6 +68,30 @@ namespace HomeApp.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("FamilyMembers");
+                });
+
+            modelBuilder.Entity("HomeApp.Domain.Entities.HomeMaintenanceLog", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int?>("IntervalMonths")
+                        .HasColumnType("integer");
+
+                    b.Property<DateOnly?>("LastDone")
+                        .HasColumnType("date");
+
+                    b.Property<string>("Notes")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("HomeMaintenanceLogs");
                 });
 
             modelBuilder.Entity("HomeApp.Domain.Entities.HomeProject", b =>
@@ -148,31 +175,25 @@ namespace HomeApp.Infrastructure.Migrations
                     b.ToTable("HomeProjectTools");
                 });
 
-            modelBuilder.Entity("HomeApp.Domain.Entities.MaintenanceTask", b =>
+            modelBuilder.Entity("HomeApp.Domain.Entities.HouseholdTask", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<string>("AnnualDates")
+                    b.Property<Guid?>("AssignedMemberId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Description")
                         .HasColumnType("text");
 
-                    b.Property<int?>("IntervalMonths")
-                        .HasColumnType("integer");
-
-                    b.Property<DateOnly?>("LastDone")
+                    b.Property<DateOnly?>("DueDate")
                         .HasColumnType("date");
 
-                    b.Property<string>("Notes")
-                        .HasColumnType("text");
+                    b.Property<bool>("IsCompleted")
+                        .HasColumnType("boolean");
 
-                    b.Property<DateOnly?>("OneTimeDate")
-                        .HasColumnType("date");
-
-                    b.Property<DateOnly?>("ScheduleAnchor")
-                        .HasColumnType("date");
-
-                    b.Property<int>("ScheduleType")
+                    b.Property<int>("Recurrence")
                         .HasColumnType("integer");
 
                     b.Property<string>("Title")
@@ -181,7 +202,9 @@ namespace HomeApp.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("MaintenanceTasks");
+                    b.HasIndex("AssignedMemberId");
+
+                    b.ToTable("HouseholdTasks");
                 });
 
             modelBuilder.Entity("HomeApp.Domain.Entities.Material", b =>
@@ -511,6 +534,15 @@ namespace HomeApp.Infrastructure.Migrations
                         .HasForeignKey("ToolId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("HomeApp.Domain.Entities.HouseholdTask", b =>
+                {
+                    b.HasOne("HomeApp.Domain.Entities.FamilyMember", "AssignedMember")
+                        .WithMany()
+                        .HasForeignKey("AssignedMemberId");
+
+                    b.Navigation("AssignedMember");
                 });
 
             modelBuilder.Entity("HomeApp.Domain.Entities.Material", b =>

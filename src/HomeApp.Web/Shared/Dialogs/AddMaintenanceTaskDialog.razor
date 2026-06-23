@@ -1,0 +1,112 @@
+@inject ISender Sender
+
+<MudDialog>
+    <DialogContent>
+        <MudForm @ref="form">
+            <MudTextField @bind-Value="title" Label="Task name" Required="true" Class="mb-4" />
+            <MudTextField @bind-Value="notes" Label="Notes" Lines="2" Class="mb-4" />
+            <MudDatePicker @bind-Date="lastDone" Label="Last done" Class="mb-4" />
+
+            <MudSelect @bind-Value="scheduleType" Label="Schedule type" Class="mb-4">
+                <MudSelectItem Value="MaintenanceScheduleType.Interval">Repeat every N months</MudSelectItem>
+                <MudSelectItem Value="MaintenanceScheduleType.AnnualDates">Specific dates each year</MudSelectItem>
+                <MudSelectItem Value="MaintenanceScheduleType.OneTime">One-time date</MudSelectItem>
+            </MudSelect>
+
+            @if (scheduleType == MaintenanceScheduleType.Interval)
+            {
+                <MudNumericField @bind-Value="intervalMonths" Label="Repeat every (months)" Min="1" Class="mb-4" />
+            }
+            else if (scheduleType == MaintenanceScheduleType.AnnualDates)
+            {
+                <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mb-2">
+                    Add one or more dates that repeat every year
+                </MudText>
+                <MudStack Row="true" AlignItems="AlignItems.End" Spacing="2" Class="mb-3">
+                    <MudSelect @bind-Value="newMonth" Label="Month" Style="min-width:130px">
+                        @for (int m = 1; m <= 12; m++)
+                        {
+                            int month = m;
+                            <MudSelectItem Value="@month">@MonthName(month)</MudSelectItem>
+                        }
+                    </MudSelect>
+                    <MudNumericField @bind-Value="newDay" Label="Day" Min="1" Max="31" Style="max-width:80px" />
+                    <MudButton Variant="Variant.Outlined" OnClick="AddAnnualDate">Add</MudButton>
+                </MudStack>
+                @if (annualDates.Count > 0)
+                {
+                    <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="1" Class="mb-4">
+                        @foreach (string d in annualDates)
+                        {
+                            <MudChip T="string" OnClose="@(() => RemoveAnnualDate(d))" Color="Color.Primary">
+                                @FormatDate(d)
+                            </MudChip>
+                        }
+                    </MudStack>
+                }
+            }
+            else if (scheduleType == MaintenanceScheduleType.OneTime)
+            {
+                <MudDatePicker @bind-Date="oneTimeDate" Label="Date" Class="mb-4" />
+            }
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Submit">Add</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = null!;
+
+    private MudForm form = null!;
+    private string title = string.Empty;
+    private string? notes;
+    private DateTime? lastDone;
+    private MaintenanceScheduleType scheduleType = MaintenanceScheduleType.Interval;
+    private int? intervalMonths;
+    private List<string> annualDates = [];
+    private int newMonth = 1;
+    private int newDay = 1;
+    private DateTime? oneTimeDate;
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private void AddAnnualDate()
+    {
+        int clampedDay = Math.Min(newDay, DateTime.DaysInMonth(2000, newMonth));
+        string entry = $"{newMonth:D2}-{clampedDay:D2}";
+        if (!annualDates.Contains(entry))
+            annualDates.Add(entry);
+        annualDates.Sort();
+    }
+
+    private void RemoveAnnualDate(string d) => annualDates.Remove(d);
+
+    private static string MonthName(int month) => new DateOnly(2000, month, 1).ToString("MMMM");
+
+    private static string FormatDate(string mmdd)
+    {
+        string[] parts = mmdd.Split('-');
+        if (parts.Length != 2) return mmdd;
+        if (int.TryParse(parts[0], out int m) && int.TryParse(parts[1], out int d))
+            return new DateOnly(2000, m, d).ToString("MMM d");
+        return mmdd;
+    }
+
+    private async Task Submit()
+    {
+        await form.ValidateAsync();
+        if (!form.IsValid) return;
+
+        DateOnly? ld = lastDone.HasValue ? DateOnly.FromDateTime(lastDone.Value) : null;
+        DateOnly? otd = oneTimeDate.HasValue ? DateOnly.FromDateTime(oneTimeDate.Value) : null;
+        string? annualDatesStr = annualDates.Count > 0 ? string.Join(",", annualDates) : null;
+
+        await Sender.Send(new CreateMaintenanceTaskCommand(
+            title, notes, ld, scheduleType, intervalMonths, annualDatesStr, otd));
+
+        MudDialog.Close(DialogResult.Ok(true));
+    }
+}

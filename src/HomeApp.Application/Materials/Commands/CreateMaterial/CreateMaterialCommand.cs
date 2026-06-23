@@ -8,5 +8,6 @@ public record CreateMaterialCommand(
     string? Unit,
     Guid? StorageLocationId,
     string? Notes,
-    string? Icon
+    string? Icon,
+    decimal? UnitPrice
 ) : IRequest<Guid>;

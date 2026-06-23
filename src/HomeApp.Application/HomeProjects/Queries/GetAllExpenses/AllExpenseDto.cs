@@ -1,3 +1,5 @@
+using HomeApp.Domain.Entities;
+
 namespace HomeApp.Application.HomeProjects.Queries;
 
 public record AllExpenseDto(
@@ -6,5 +8,6 @@ public record AllExpenseDto(
     string ProjectTitle,
     string Description,
     decimal Amount,
-    DateOnly Date
+    DateOnly Date,
+    ExpenseCategory Category
 );

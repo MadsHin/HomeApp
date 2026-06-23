@@ -18,6 +18,7 @@ public class UpdateMaterialHandler(IAppDbContext dbContext) : IRequestHandler<Up
         material.StorageLocationId = request.StorageLocationId;
         material.Notes = request.Notes;
         material.Icon = request.Icon;
+        material.UnitPrice = request.UnitPrice;
 
         await dbContext.SaveChangesAsync(cancellationToken);
     }

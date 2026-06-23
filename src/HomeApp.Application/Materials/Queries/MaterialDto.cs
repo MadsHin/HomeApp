@@ -8,5 +8,6 @@ public record MaterialDto(
     Guid? StorageLocationId,
     string? StorageLocationName,
     string? Notes,
-    string? Icon
+    string? Icon,
+    decimal? UnitPrice
 );

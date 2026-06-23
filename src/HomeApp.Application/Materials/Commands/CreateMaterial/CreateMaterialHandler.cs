@@ -20,6 +20,7 @@ public class CreateMaterialHandler(IAppDbContext dbContext) : IRequestHandler<Cr
             StorageLocationId = request.StorageLocationId,
             Notes = request.Notes,
             Icon = request.Icon,
+            UnitPrice = request.UnitPrice,
             SortOrder = count,
             CreatedAt = DateTime.UtcNow
         };

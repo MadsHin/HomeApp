@@ -6,6 +6,7 @@ public class ProjectExpense
     public required string Description { get; set; }
     public decimal Amount { get; set; }
     public DateOnly Date { get; set; }
+    public ExpenseCategory Category { get; set; } = ExpenseCategory.Other;
     public DateTime CreatedAt { get; set; }
 
     public Guid HomeProjectId { get; set; }

@@ -267,6 +267,7 @@ else
                             <MudTh Style="text-align:right">Needed</MudTh>
                             <MudTh Style="text-align:right">In stock</MudTh>
                             <MudTh Style="text-align:center">Coverage</MudTh>
+                            <MudTh Style="text-align:right">Est. cost</MudTh>
                             <MudTh />
                         </HeaderContent>
                         <RowTemplate>
@@ -302,6 +303,16 @@ else
                             <MudTd Style="text-align:center">
                                 @{ (string label, Color color) = StockCoverage(context); }
                                 <MudChip T="string" Size="Size.Small" Color="@color">@label</MudChip>
+                            </MudTd>
+                            <MudTd Style="text-align:right">
+                                @if (context.UnitPrice.HasValue && context.QuantityNeeded.HasValue)
+                                {
+                                    <MudText Typo="Typo.body2">@((context.QuantityNeeded.Value * context.UnitPrice.Value).ToString("N0")) kr</MudText>
+                                }
+                                else
+                                {
+                                    <MudText Color="Color.Secondary">—</MudText>
+                                }
                             </MudTd>
                             <MudTd>
                                 <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
@@ -445,10 +456,20 @@ else
                         <MudItem xs="12" sm="4">
                             <MudTextField @bind-Value="expenseDescription" Label="Description" />
                         </MudItem>
-                        <MudItem xs="12" sm="3">
+                        <MudItem xs="12" sm="2">
                             <MudNumericField @bind-Value="expenseAmount" Label="Amount (kr)" Min="0" />
                         </MudItem>
-                        <MudItem xs="12" sm="3">
+                        <MudItem xs="12" sm="2">
+                            <MudSelect @bind-Value="expenseCategory" Label="Category">
+                                <MudSelectItem Value="ExpenseCategory.Materials">Materials</MudSelectItem>
+                                <MudSelectItem Value="ExpenseCategory.Labour">Labour</MudSelectItem>
+                                <MudSelectItem Value="ExpenseCategory.Tools">Tools</MudSelectItem>
+                                <MudSelectItem Value="ExpenseCategory.Permits">Permits</MudSelectItem>
+                                <MudSelectItem Value="ExpenseCategory.Rental">Rental</MudSelectItem>
+                                <MudSelectItem Value="ExpenseCategory.Other">Other</MudSelectItem>
+                            </MudSelect>
+                        </MudItem>
+                        <MudItem xs="12" sm="2">
                             <MudDatePicker @bind-Date="expenseDate" Label="Date" />
                         </MudItem>
                         <MudItem xs="12" sm="2" Class="d-flex align-end">
@@ -459,39 +480,85 @@ else
                     </MudGrid>
                 </MudPaper>
 
+                @if (project!.Budget.HasValue)
+                {
+                    decimal totalSpent = projectExpenses.Sum(e => e.Amount);
+                    decimal budget = project.Budget.Value;
+                    bool overBudget = totalSpent > budget;
+                    double pct = budget > 0 ? Math.Min((double)(totalSpent / budget * 100), 100) : 0;
+                    <MudPaper Elevation="1" Class="pa-4 mb-5">
+                        <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-2">
+                            <MudText Typo="Typo.subtitle2">Budget</MudText>
+                            <MudChip T="string" Size="Size.Small" Color="@(overBudget ? Color.Error : Color.Success)">
+                                @(overBudget ? $"Over by {(totalSpent - budget).ToString("N0")} kr" : $"{(budget - totalSpent).ToString("N0")} kr remaining")
+                            </MudChip>
+                        </MudStack>
+                        <MudProgressLinear Value="@pct" Max="100"
+                                           Color="@(overBudget ? Color.Error : Color.Success)"
+                                           Rounded="true" Size="Size.Medium" Class="mb-2" />
+                        <MudStack Row="true" Spacing="4">
+                            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                                Budget: <strong>@budget.ToString("N0") kr</strong>
+                            </MudText>
+                            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                                Spent: <strong>@totalSpent.ToString("N0") kr</strong>
+                            </MudText>
+                        </MudStack>
+                    </MudPaper>
+                }
+
                 @if (projectExpenses.Count == 0)
                 {
                     <MudText Color="Color.Secondary">No expenses logged yet.</MudText>
                 }
                 else
                 {
-                    @if (project!.Budget.HasValue)
-                    {
-                        decimal totalSpent = projectExpenses.Sum(e => e.Amount);
-                        decimal remaining = project.Budget.Value - totalSpent;
-                        <MudStack Row="true" Spacing="4" Class="mb-5" AlignItems="AlignItems.Center">
-                            <MudText Typo="Typo.body2">
-                                Budget: <strong>@project.Budget.Value.ToString("N0") kr</strong>
-                            </MudText>
-                            <MudText Typo="Typo.body2">
-                                Spent: <strong>@totalSpent.ToString("N0") kr</strong>
-                            </MudText>
-                            <MudText Typo="Typo.body2" Color="@(remaining < 0 ? Color.Error : Color.Success)">
-                                Remaining: <strong>@remaining.ToString("N0") kr</strong>
-                            </MudText>
-                        </MudStack>
-                    }
+                    <MudGrid Class="mb-5">
+                        <MudItem xs="12" sm="5">
+                            <MudChart T="double" ChartType="ChartType.Donut"
+                                      InputData="@ExpenseChartData"
+                                      InputLabels="@ExpenseChartLabels"
+                                      Width="220px" Height="220px"
+                                      LegendPosition="Position.Right" />
+                        </MudItem>
+                        <MudItem xs="12" sm="7" Class="d-flex align-center">
+                            <MudSimpleTable Dense="true" Hover="false" Elevation="0" Style="width:100%">
+                                <tbody>
+                                    @foreach (var cat in ExpensesByCategory)
+                                    {
+                                        <tr>
+                                            <td><MudText Typo="Typo.body2">@cat.Label</MudText></td>
+                                            <td style="text-align:right">
+                                                <MudText Typo="Typo.body2">@cat.Total.ToString("N0") kr</MudText>
+                                            </td>
+                                            <td style="text-align:right;width:60px">
+                                                <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                                    @((cat.Total / projectExpenses.Sum(e => e.Amount) * 100).ToString("N0"))%
+                                                </MudText>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </MudSimpleTable>
+                        </MudItem>
+                    </MudGrid>
 
                     <MudTable T="ProjectExpenseDto" Items="projectExpenses" Hover="true" Elevation="0">
                         <HeaderContent>
                             <MudTh>Date</MudTh>
                             <MudTh>Description</MudTh>
+                            <MudTh>Category</MudTh>
                             <MudTh Style="text-align:right">Amount</MudTh>
                             <MudTh />
                         </HeaderContent>
                         <RowTemplate>
                             <MudTd>@context.Date.ToString("dd MMM yyyy")</MudTd>
                             <MudTd>@context.Description</MudTd>
+                            <MudTd>
+                                <MudChip T="string" Size="Size.Small" Color="@CategoryColor(context.Category)">
+                                    @CategoryLabel(context.Category)
+                                </MudChip>
+                            </MudTd>
                             <MudTd Style="text-align:right">@context.Amount.ToString("N0") kr</MudTd>
                             <MudTd>
                                 <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
@@ -500,7 +567,7 @@ else
                             </MudTd>
                         </RowTemplate>
                         <FooterContent>
-                            <MudTd colspan="2"><strong>Total</strong></MudTd>
+                            <MudTd colspan="3"><strong>Total</strong></MudTd>
                             <MudTd Style="text-align:right"><strong>@projectExpenses.Sum(e => e.Amount).ToString("N0") kr</strong></MudTd>
                             <MudTd />
                         </FooterContent>
@@ -729,6 +796,7 @@ else
     private string expenseDescription = string.Empty;
     private decimal? expenseAmount;
     private DateTime? expenseDate = DateTime.Today;
+    private ExpenseCategory expenseCategory = ExpenseCategory.Materials;
 
     protected override async Task OnInitializedAsync() => await Load();
 
@@ -811,10 +879,11 @@ else
         DateOnly date = expenseDate.HasValue
             ? DateOnly.FromDateTime(expenseDate.Value)
             : DateOnly.FromDateTime(DateTime.Today);
-        await Sender.Send(new AddProjectExpenseCommand(Id, expenseDescription, expenseAmount.Value, date));
+        await Sender.Send(new AddProjectExpenseCommand(Id, expenseDescription, expenseAmount.Value, date, expenseCategory));
         expenseDescription = string.Empty;
         expenseAmount = null;
         expenseDate = DateTime.Today;
+        expenseCategory = ExpenseCategory.Materials;
         await Load();
     }
 
@@ -1007,6 +1076,41 @@ else
         ToolStatus.Required  => note is not null ? $"Required — {note}" : "Required",
         _                    => "Owned"
     };
+
+    private static Color CategoryColor(ExpenseCategory cat) => cat switch
+    {
+        ExpenseCategory.Materials => Color.Primary,
+        ExpenseCategory.Labour    => Color.Secondary,
+        ExpenseCategory.Tools     => Color.Tertiary,
+        ExpenseCategory.Permits   => Color.Warning,
+        ExpenseCategory.Rental    => Color.Info,
+        _                         => Color.Default
+    };
+
+    private static string CategoryLabel(ExpenseCategory cat) => cat switch
+    {
+        ExpenseCategory.Materials => "Materials",
+        ExpenseCategory.Labour    => "Labour",
+        ExpenseCategory.Tools     => "Tools",
+        ExpenseCategory.Permits   => "Permits",
+        ExpenseCategory.Rental    => "Rental",
+        _                         => "Other"
+    };
+
+    private record CategoryTotal(string Label, decimal Total);
+
+    private List<CategoryTotal> ExpensesByCategory =>
+        projectExpenses
+            .GroupBy(e => e.Category)
+            .Select(g => new CategoryTotal(CategoryLabel(g.Key), g.Sum(e => e.Amount)))
+            .OrderByDescending(c => c.Total)
+            .ToList();
+
+    private double[] ExpenseChartData =>
+        ExpensesByCategory.Select(c => (double)c.Total).ToArray();
+
+    private string[] ExpenseChartLabels =>
+        ExpensesByCategory.Select(c => c.Label).ToArray();
 
     private async Task AddProgressEntry()
     {

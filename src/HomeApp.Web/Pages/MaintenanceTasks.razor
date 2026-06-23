@@ -1,0 +1,148 @@
+@page "/maintenance"
+@inject ISender Sender
+@inject IDialogService DialogService
+
+<MudText Typo="Typo.h4" Class="mb-6">Maintenance</MudText>
+
+<MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add"
+           OnClick="OpenAddDialog" Class="mb-5">
+    Add task
+</MudButton>
+
+@if (tasks is null)
+{
+    <MudProgressCircular Indeterminate="true" />
+}
+else if (tasks.Count == 0)
+{
+    <MudText Color="Color.Secondary">No maintenance tasks yet.</MudText>
+}
+else
+{
+    <MudTable T="MaintenanceTaskDto" Items="tasks" Hover="true" Elevation="2">
+        <HeaderContent>
+            <MudTh>Task</MudTh>
+            <MudTh Style="text-align:center">Schedule</MudTh>
+            <MudTh Style="text-align:center">Last done</MudTh>
+            <MudTh Style="text-align:center">Next due</MudTh>
+            <MudTh Style="text-align:center">Status</MudTh>
+            <MudTh />
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd>
+                <MudText Typo="Typo.body1">@context.Title</MudText>
+                @if (context.Notes is not null)
+                {
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">@context.Notes</MudText>
+                }
+            </MudTd>
+            <MudTd Style="text-align:center">
+                <MudText Typo="Typo.body2">@ScheduleDescription(context)</MudText>
+            </MudTd>
+            <MudTd Style="text-align:center">
+                @(context.LastDone?.ToString("dd MMM yyyy") ?? "—")
+            </MudTd>
+            <MudTd Style="text-align:center">
+                @(context.NextDue?.ToString("dd MMM yyyy") ?? "—")
+            </MudTd>
+            <MudTd Style="text-align:center">
+                @{ (string statusLabel, Color statusColor) = DueStatus(context); }
+                <MudChip T="string" Size="Size.Small" Color="@statusColor">@statusLabel</MudChip>
+            </MudTd>
+            <MudTd>
+                <MudTooltip Text="Mark as done today">
+                    <MudIconButton Icon="@Icons.Material.Filled.CheckCircle" Size="Size.Small"
+                                   Color="Color.Success"
+                                   OnClick="@(() => MarkDone(context.Id))" />
+                </MudTooltip>
+                <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
+                               Color="Color.Primary"
+                               OnClick="@(() => OpenEditDialog(context))" />
+                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
+                               Color="Color.Error"
+                               OnClick="@(() => Delete(context.Id))" />
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+}
+
+@code {
+    private List<MaintenanceTaskDto>? tasks;
+
+    protected override async Task OnInitializedAsync() => await Load();
+
+    private async Task Load()
+    {
+        tasks = await Sender.Send(new GetMaintenanceTasksQuery());
+    }
+
+    private async Task OpenAddDialog()
+    {
+        IDialogReference d = await DialogService.ShowAsync<AddMaintenanceTaskDialog>("Add maintenance task");
+        DialogResult? r = await d.Result;
+        if (r is { Canceled: false }) await Load();
+    }
+
+    private async Task OpenEditDialog(MaintenanceTaskDto task)
+    {
+        DialogParameters<EditMaintenanceTaskDialog> p = new();
+        p.Add(x => x.Task, task);
+        IDialogReference d = await DialogService.ShowAsync<EditMaintenanceTaskDialog>("Edit maintenance task", p);
+        DialogResult? r = await d.Result;
+        if (r is { Canceled: false }) await Load();
+    }
+
+    private async Task MarkDone(Guid id)
+    {
+        await Sender.Send(new MarkTaskDoneCommand(id));
+        await Load();
+    }
+
+    private async Task Delete(Guid id)
+    {
+        await Sender.Send(new DeleteMaintenanceTaskCommand(id));
+        await Load();
+    }
+
+    private static string ScheduleDescription(MaintenanceTaskDto t) => t.ScheduleType switch
+    {
+        MaintenanceScheduleType.Interval    => t.IntervalMonths.HasValue ? $"Every {t.IntervalMonths} mo." : "—",
+        MaintenanceScheduleType.AnnualDates => FormatAnnualDates(t.AnnualDates),
+        MaintenanceScheduleType.OneTime     => t.OneTimeDate?.ToString("dd MMM yyyy") ?? "—",
+        _                                   => "—"
+    };
+
+    private static string FormatAnnualDates(string? raw)
+    {
+        if (string.IsNullOrWhiteSpace(raw)) return "—";
+        var parts = raw.Split(',')
+            .Select(p => p.Trim())
+            .Where(p => p.Length == 5)
+            .Select(p =>
+            {
+                string[] seg = p.Split('-');
+                if (seg.Length != 2) return p;
+                if (int.TryParse(seg[0], out int m) && int.TryParse(seg[1], out int d))
+                    return new DateOnly(2000, m, d).ToString("MMM d");
+                return p;
+            });
+        return string.Join(", ", parts);
+    }
+
+    private static (string Label, Color Color) DueStatus(MaintenanceTaskDto t)
+    {
+        if (t.ScheduleType == MaintenanceScheduleType.OneTime && t.LastDone.HasValue)
+            return ("Done", Color.Success);
+        if (t.NextDue is null)
+            return ("No schedule", Color.Default);
+
+        int days = t.NextDue.Value.DayNumber - DateOnly.FromDateTime(DateTime.Today).DayNumber;
+        return days switch
+        {
+            < 0    => ("Overdue",    Color.Error),
+            <= 14  => ("Due soon",   Color.Warning),
+            <= 60  => ("Upcoming",   Color.Info),
+            _      => ("OK",         Color.Success)
+        };
+    }
+}

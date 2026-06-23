@@ -13,7 +13,7 @@
         <MudPaper Class="pa-3 d-flex align-center justify-space-between flex-grow-1" Elevation="2">
             <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
                 <MudIcon Icon="@Icons.Material.Filled.Warning" Color="@(OverdueCount > 0 ? Color.Error : Color.Success)" />
-                <MudText Typo="Typo.body2" Color="Color.Secondary">Overdue Tasks</MudText>
+                <MudText Typo="Typo.body2" Color="Color.Secondary">Overdue</MudText>
             </MudStack>
             <MudText Typo="Typo.h5" Color="@(OverdueCount > 0 ? Color.Error : Color.Default)">@OverdueCount</MudText>
         </MudPaper>
@@ -21,10 +21,10 @@
     <MudItem xs="12" sm="6" md="3" Class="d-flex">
         <MudPaper Class="pa-3 d-flex align-center justify-space-between flex-grow-1" Elevation="2">
             <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
-                <MudIcon Icon="@Icons.Material.Filled.Today" Color="Color.Primary" />
-                <MudText Typo="Typo.body2" Color="Color.Secondary">Due This Week</MudText>
+                <MudIcon Icon="@Icons.Material.Filled.Today" Color="Color.Warning" />
+                <MudText Typo="Typo.body2" Color="Color.Secondary">Due this month</MudText>
             </MudStack>
-            <MudText Typo="Typo.h5">@DueThisWeekCount</MudText>
+            <MudText Typo="Typo.h5">@DueThisMonthCount</MudText>
         </MudPaper>
     </MudItem>
     <MudItem xs="12" sm="6" md="3" Class="d-flex">
@@ -47,42 +47,46 @@
     </MudItem>
 </MudGrid>
 
-<!-- Tasks and Projects -->
+<!-- Maintenance -->
 <MudGrid Class="mb-8">
-
-    <!-- Overdue tasks -->
     <MudItem xs="12" md="6" Class="d-flex">
         <MudPaper Class="pa-4 flex-grow-1" Elevation="2">
-            <MudText Typo="Typo.h6" Class="mb-3">
-                <MudIcon Icon="@Icons.Material.Filled.ErrorOutline" Color="Color.Error" Class="mr-2" />
-                Overdue
-            </MudText>
-            @if (overdueTasks is null)
+            <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-3">
+                <MudText Typo="Typo.h6">
+                    <MudIcon Icon="@Icons.Material.Filled.ErrorOutline" Color="Color.Error" Class="mr-2" />
+                    Overdue
+                </MudText>
+                <MudButton Variant="Variant.Text" Color="Color.Primary" Href="/maintenance" Size="Size.Small">
+                    All tasks
+                </MudButton>
+            </MudStack>
+            @if (maintenanceTasks is null)
             {
                 <MudProgressLinear Indeterminate="true" />
             }
-            else if (overdueTasks.Count == 0)
+            else if (OverdueTasks.Count == 0)
             {
                 <MudText Color="Color.Success">Nothing overdue — great job!</MudText>
             }
             else
             {
-                <MudList T="HouseholdTaskDto" Dense="true">
-                    @foreach (HouseholdTaskDto task in overdueTasks)
+                <MudList T="MaintenanceTaskDto" Dense="true">
+                    @foreach (MaintenanceTaskDto t in OverdueTasks)
                     {
                         <MudListItem>
                             <div class="d-flex justify-space-between align-center">
                                 <div>
-                                    <MudText Typo="Typo.body1">@task.Title</MudText>
-                                    @if (task.DueDate.HasValue)
+                                    <MudText Typo="Typo.body1">@t.Title</MudText>
+                                    @if (t.NextDue.HasValue)
                                     {
-                                        <MudText Typo="Typo.caption" Color="Color.Error">Due @task.DueDate</MudText>
+                                        <MudText Typo="Typo.caption" Color="Color.Error">
+                                            Due @t.NextDue.Value.ToString("dd MMM yyyy")
+                                        </MudText>
                                     }
                                 </div>
                                 <MudIconButton Icon="@Icons.Material.Filled.CheckCircleOutline"
-                                               Color="Color.Success"
-                                               Size="Size.Small"
-                                               OnClick="() => CompleteTask(task.Id)" />
+                                               Color="Color.Success" Size="Size.Small"
+                                               OnClick="@(() => MarkDone(t.Id))" />
                             </div>
                         </MudListItem>
                     }
@@ -91,39 +95,44 @@
         </MudPaper>
     </MudItem>
 
-    <!-- Due this week -->
     <MudItem xs="12" md="6" Class="d-flex">
         <MudPaper Class="pa-4 flex-grow-1" Elevation="2">
-            <MudText Typo="Typo.h6" Class="mb-3">
-                <MudIcon Icon="@Icons.Material.Filled.CalendarToday" Color="Color.Primary" Class="mr-2" />
-                Due This Week
-            </MudText>
-            @if (allTasks is null)
+            <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-3">
+                <MudText Typo="Typo.h6">
+                    <MudIcon Icon="@Icons.Material.Filled.CalendarToday" Color="Color.Warning" Class="mr-2" />
+                    Due this month
+                </MudText>
+                <MudButton Variant="Variant.Text" Color="Color.Primary" Href="/maintenance" Size="Size.Small">
+                    All tasks
+                </MudButton>
+            </MudStack>
+            @if (maintenanceTasks is null)
             {
                 <MudProgressLinear Indeterminate="true" />
             }
-            else if (DueThisWeek.Count == 0)
+            else if (DueThisMonth.Count == 0)
             {
-                <MudText Color="Color.Secondary">No tasks due this week.</MudText>
+                <MudText Color="Color.Secondary">Nothing due this month.</MudText>
             }
             else
             {
-                <MudList T="HouseholdTaskDto" Dense="true">
-                    @foreach (HouseholdTaskDto task in DueThisWeek)
+                <MudList T="MaintenanceTaskDto" Dense="true">
+                    @foreach (MaintenanceTaskDto t in DueThisMonth)
                     {
                         <MudListItem>
                             <div class="d-flex justify-space-between align-center">
                                 <div>
-                                    <MudText Typo="Typo.body1">@task.Title</MudText>
-                                    @if (task.DueDate.HasValue)
+                                    <MudText Typo="Typo.body1">@t.Title</MudText>
+                                    @if (t.NextDue.HasValue)
                                     {
-                                        <MudText Typo="Typo.caption" Color="Color.Secondary">Due @task.DueDate</MudText>
+                                        <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                            Due @t.NextDue.Value.ToString("dd MMM yyyy")
+                                        </MudText>
                                     }
                                 </div>
                                 <MudIconButton Icon="@Icons.Material.Filled.CheckCircleOutline"
-                                               Color="Color.Success"
-                                               Size="Size.Small"
-                                               OnClick="() => CompleteTask(task.Id)" />
+                                               Color="Color.Success" Size="Size.Small"
+                                               OnClick="@(() => MarkDone(t.Id))" />
                             </div>
                         </MudListItem>
                     }
@@ -291,7 +300,7 @@ else
     <MudStack Row="true" Spacing="3">
         <MudButton Variant="Variant.Filled" Color="Color.Primary"
                    StartIcon="@Icons.Material.Filled.Add"
-                   OnClick="OpenAddTaskDialog">
+                   OnClick="OpenAddMaintenanceTaskDialog">
             Add Task
         </MudButton>
         <MudButton Variant="Variant.Outlined" Color="Color.Primary"
@@ -303,8 +312,7 @@ else
 </MudPaper>
 
 @code {
-    private List<HouseholdTaskDto>? overdueTasks;
-    private List<HouseholdTaskDto>? allTasks;
+    private List<MaintenanceTaskDto>? maintenanceTasks;
     private List<HomeProjectDto>? projects;
     private List<FamilyMemberDto>? familyMembers;
     private List<ToolDto>? tools;
@@ -322,41 +330,57 @@ else
         _    => "Good evening"
     };
 
-    private int OverdueCount => overdueTasks?.Count ?? 0;
-    private int DueThisWeekCount => DueThisWeek.Count;
-    private int ActiveProjectCount => ActiveProjects.Count;
+    private List<MaintenanceTaskDto> OverdueTasks => maintenanceTasks
+        ?.Where(t => t.NextDue.HasValue && t.NextDue.Value < DateOnly.FromDateTime(DateTime.Today))
+        .ToList() ?? [];
 
-    private List<HouseholdTaskDto> DueThisWeek
-    {
-        get
-        {
-            if (allTasks is null) return [];
-            DateOnly today = DateOnly.FromDateTime(DateTime.Today);
-            DateOnly weekEnd = today.AddDays(7);
-            return allTasks
-                .Where(t => !t.IsCompleted && t.DueDate.HasValue && t.DueDate.Value >= today && t.DueDate.Value <= weekEnd)
-                .ToList();
-        }
-    }
+    private List<MaintenanceTaskDto> DueThisMonth => maintenanceTasks
+        ?.Where(t => t.NextDue.HasValue
+            && t.NextDue.Value >= DateOnly.FromDateTime(DateTime.Today)
+            && t.NextDue.Value <= DateOnly.FromDateTime(DateTime.Today).AddDays(30))
+        .ToList() ?? [];
+
+    private int OverdueCount       => OverdueTasks.Count;
+    private int DueThisMonthCount  => DueThisMonth.Count;
+    private int ActiveProjectCount => ActiveProjects.Count;
 
     private List<HomeProjectDto> ActiveProjects => projects
         ?.Where(p => p.Status is ProjectStatus.Planning or ProjectStatus.InProgress)
         .ToList() ?? [];
 
+    private List<ToolDto> LentOutTools  => tools?.Where(t => t.Status == ToolStatus.LentOut).ToList() ?? [];
+    private List<ToolDto> BorrowedTools => tools?.Where(t => t.Status == ToolStatus.Borrowed).ToList() ?? [];
+
     protected override async Task OnInitializedAsync() => await LoadAll();
 
     private async Task LoadAll()
     {
-        overdueTasks = await Sender.Send(new GetOverdueTasksQuery());
-        allTasks = await Sender.Send(new GetHouseholdTasksQuery());
-        projects = await Sender.Send(new GetHomeProjectsQuery());
-        familyMembers = await Sender.Send(new GetFamilyMembersQuery());
-        tools = await Sender.Send(new GetToolsQuery());
-        allExpenses = await Sender.Send(new GetAllExpensesQuery());
+        maintenanceTasks = await Sender.Send(new GetMaintenanceTasksQuery());
+        projects         = await Sender.Send(new GetHomeProjectsQuery());
+        familyMembers    = await Sender.Send(new GetFamilyMembersQuery());
+        tools            = await Sender.Send(new GetToolsQuery());
+        allExpenses      = await Sender.Send(new GetAllExpensesQuery());
     }
 
-    private List<ToolDto> LentOutTools => tools?.Where(t => t.Status == ToolStatus.LentOut).ToList() ?? [];
-    private List<ToolDto> BorrowedTools => tools?.Where(t => t.Status == ToolStatus.Borrowed).ToList() ?? [];
+    private async Task MarkDone(Guid id)
+    {
+        await Sender.Send(new MarkTaskDoneCommand(id));
+        await LoadAll();
+    }
+
+    private async Task OpenAddMaintenanceTaskDialog()
+    {
+        IDialogReference dialog = await DialogService.ShowAsync<AddMaintenanceTaskDialog>("Add maintenance task");
+        DialogResult? result = await dialog.Result;
+        if (result is { Canceled: false }) await LoadAll();
+    }
+
+    private async Task OpenAddProjectDialog()
+    {
+        IDialogReference dialog = await DialogService.ShowAsync<AddProjectDialog>("New Project");
+        DialogResult? result = await dialog.Result;
+        if (result is { Canceled: false }) await LoadAll();
+    }
 
     private List<AllExpenseDto> FilteredExpenses
     {
@@ -389,26 +413,6 @@ else
 
             return query.ToList();
         }
-    }
-
-    private async Task CompleteTask(Guid id)
-    {
-        await Sender.Send(new CompleteHouseholdTaskCommand(id));
-        await LoadAll();
-    }
-
-    private async Task OpenAddTaskDialog()
-    {
-        IDialogReference dialog = await DialogService.ShowAsync<AddTaskDialog>("Add Task");
-        DialogResult? result = await dialog.Result;
-        if (result is { Canceled: false }) await LoadAll();
-    }
-
-    private async Task OpenAddProjectDialog()
-    {
-        IDialogReference dialog = await DialogService.ShowAsync<AddProjectDialog>("New Project");
-        DialogResult? result = await dialog.Result;
-        if (result is { Canceled: false }) await LoadAll();
     }
 
     private static Color StatusColor(ProjectStatus status) => status switch

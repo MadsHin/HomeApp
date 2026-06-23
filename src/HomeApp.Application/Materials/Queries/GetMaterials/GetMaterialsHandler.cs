@@ -15,7 +15,7 @@ public class GetMaterialsHandler(IAppDbContext dbContext) : IRequestHandler<GetM
                 m.Id, m.Name, m.Quantity, m.Unit,
                 m.StorageLocationId,
                 m.StorageLocation != null ? m.StorageLocation.Name : null,
-                m.Notes, m.Icon))
+                m.Notes, m.Icon, m.UnitPrice))
             .ToListAsync(cancellationToken);
     }
 }

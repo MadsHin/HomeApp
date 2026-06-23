@@ -3,6 +3,7 @@ using System;
 using HomeApp.Infrastructure.Persistance;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace HomeApp.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260623105733_MergeTasksIntoMaintenanceTask")]
+    partial class MergeTasksIntoMaintenanceTask
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -167,9 +170,6 @@ namespace HomeApp.Infrastructure.Migrations
                         .HasColumnType("text");
 
                     b.Property<DateOnly?>("OneTimeDate")
-                        .HasColumnType("date");
-
-                    b.Property<DateOnly?>("ScheduleAnchor")
                         .HasColumnType("date");
 
                     b.Property<int>("ScheduleType")

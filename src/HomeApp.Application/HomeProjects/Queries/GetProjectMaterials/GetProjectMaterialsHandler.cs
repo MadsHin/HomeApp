@@ -18,7 +18,8 @@ public class GetProjectMaterialsHandler(IAppDbContext dbContext)
                 m.Material.Icon,
                 m.Material.Unit,
                 m.QuantityNeeded,
-                m.Material.Quantity))
+                m.Material.Quantity,
+                m.Material.UnitPrice))
             .ToListAsync(cancellationToken);
     }
 }

@@ -6,5 +6,6 @@ public record ProjectMaterialDto(
     string? Icon,
     string? Unit,
     decimal? QuantityNeeded,
-    decimal? QuantityInStock
+    decimal? QuantityInStock,
+    decimal? UnitPrice
 );

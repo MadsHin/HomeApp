@@ -15,6 +15,7 @@ public class AddProjectExpenseHandler(IAppDbContext dbContext) : IRequestHandler
             Description = request.Description,
             Amount = request.Amount,
             Date = request.Date,
+            Category = request.Category,
             CreatedAt = DateTime.UtcNow
         });
 
