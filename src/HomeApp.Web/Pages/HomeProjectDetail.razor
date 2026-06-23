@@ -325,6 +325,28 @@ else
                     Add Tool
                 </MudButton>
 
+                @if (projectTools.Any(t => t.Status == ToolStatus.Required))
+                {
+                    <MudAlert Severity="Severity.Error" Class="mb-5">
+                        <MudText Typo="Typo.subtitle2" Class="mb-1">
+                            @projectTools.Count(t => t.Status == ToolStatus.Required) tool@(projectTools.Count(t => t.Status == ToolStatus.Required) == 1 ? "" : "s") still required for this project
+                        </MudText>
+                        @foreach (HomeProjectToolDto t in projectTools.Where(t => t.Status == ToolStatus.Required))
+                        {
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                                <MudIcon Icon="@Icons.Material.Filled.ShoppingCart" Size="Size.Small" />
+                                <MudText Typo="Typo.body2">
+                                    <strong>@t.Name</strong>
+                                    @if (t.StatusNote is not null)
+                                    {
+                                        <span> — @t.StatusNote</span>
+                                    }
+                                </MudText>
+                            </MudStack>
+                        }
+                    </MudAlert>
+                }
+
                 @if (projectTools.Count == 0)
                 {
                     <MudText Color="Color.Secondary">No tools added yet.</MudText>
@@ -970,18 +992,20 @@ else
 
     private static Color ToolStatusColor(ToolStatus status) => status switch
     {
-        ToolStatus.LentOut  => Color.Warning,
-        ToolStatus.Borrowed => Color.Info,
-        ToolStatus.Rented   => Color.Secondary,
-        _                   => Color.Success
+        ToolStatus.LentOut   => Color.Warning,
+        ToolStatus.Borrowed  => Color.Info,
+        ToolStatus.Rented    => Color.Secondary,
+        ToolStatus.Required  => Color.Error,
+        _                    => Color.Success
     };
 
     private static string ToolStatusLabel(ToolStatus status, string? note) => status switch
     {
-        ToolStatus.LentOut  => note is not null ? $"Lent to {note}" : "Lent out",
-        ToolStatus.Borrowed => note is not null ? $"Borrowed from {note}" : "Borrowed",
-        ToolStatus.Rented   => note is not null ? $"Rented from {note}" : "Rented",
-        _                   => "Owned"
+        ToolStatus.LentOut   => note is not null ? $"Lent to {note}" : "Lent out",
+        ToolStatus.Borrowed  => note is not null ? $"Borrowed from {note}" : "Borrowed",
+        ToolStatus.Rented    => note is not null ? $"Rented from {note}" : "Rented",
+        ToolStatus.Required  => note is not null ? $"Required — {note}" : "Required",
+        _                    => "Owned"
     };
 
     private async Task AddProgressEntry()

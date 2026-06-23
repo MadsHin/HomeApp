@@ -6,21 +6,25 @@
         <MudForm @ref="form">
             <MudTextField @bind-Value="name" Label="Name" Required="true" Class="mb-4" />
             <MudTextField @bind-Value="category" Label="Category" Placeholder="power tool, hand tool, measuring…" Class="mb-4" />
-            <MudSelect @bind-Value="storageLocationId" Label="Storage location" Clearable="true" Class="mb-4">
-                @foreach (StorageLocationDto loc in locations)
-                {
-                    <MudSelectItem Value="@((Guid?)loc.Id)">@loc.Name</MudSelectItem>
-                }
-            </MudSelect>
             <MudSelect @bind-Value="status" Label="Status" Class="mb-4">
                 <MudSelectItem Value="ToolStatus.Owned">Owned</MudSelectItem>
                 <MudSelectItem Value="ToolStatus.LentOut">Lent out</MudSelectItem>
                 <MudSelectItem Value="ToolStatus.Borrowed">Borrowed</MudSelectItem>
                 <MudSelectItem Value="ToolStatus.Rented">Rented</MudSelectItem>
+                <MudSelectItem Value="ToolStatus.Required">Required</MudSelectItem>
             </MudSelect>
             @if (status != ToolStatus.Owned)
             {
                 <MudTextField @bind-Value="statusNote" Label="@StatusNoteLabel" Class="mb-4" />
+            }
+            @if (status == ToolStatus.Owned)
+            {
+                <MudSelect @bind-Value="storageLocationId" Label="Storage location" Clearable="true" Class="mb-4">
+                    @foreach (StorageLocationDto loc in locations)
+                    {
+                        <MudSelectItem Value="@((Guid?)loc.Id)">@loc.Name</MudSelectItem>
+                    }
+                </MudSelect>
             }
             <MudTextField @bind-Value="notes" Label="Notes" Lines="3" Class="mb-4" />
             <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
@@ -61,10 +65,11 @@
 
     private string StatusNoteLabel => status switch
     {
-        ToolStatus.LentOut => "Lent to",
-        ToolStatus.Borrowed => "Borrowed from",
-        ToolStatus.Rented => "Rented from",
-        _ => "Note"
+        ToolStatus.LentOut   => "Lent to",
+        ToolStatus.Borrowed  => "Borrowed from",
+        ToolStatus.Rented    => "Rented from",
+        ToolStatus.Required  => "Where to get",
+        _                    => "Note"
     };
 
     private void Cancel() => MudDialog.Cancel();
@@ -85,7 +90,8 @@
         if (!form.IsValid) return;
 
         string? note = status == ToolStatus.Owned ? null : statusNote;
-        await Sender.Send(new CreateToolCommand(name, category, icon, notes, status, note, storageLocationId));
+        Guid? location = status == ToolStatus.Owned ? storageLocationId : null;
+        await Sender.Send(new CreateToolCommand(name, category, icon, notes, status, note, location));
         MudDialog.Close(DialogResult.Ok(true));
     }
 }

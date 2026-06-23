@@ -46,18 +46,20 @@
 
     private static Color StatusColor(ToolStatus status) => status switch
     {
-        ToolStatus.LentOut => Color.Warning,
-        ToolStatus.Borrowed => Color.Info,
-        ToolStatus.Rented => Color.Secondary,
-        _ => Color.Success
+        ToolStatus.LentOut   => Color.Warning,
+        ToolStatus.Borrowed  => Color.Info,
+        ToolStatus.Rented    => Color.Secondary,
+        ToolStatus.Required  => Color.Error,
+        _                    => Color.Success
     };
 
     private static string StatusLabel(ToolStatus status, string? note) => status switch
     {
-        ToolStatus.LentOut => note is not null ? $"Lent to {note}" : "Lent out",
-        ToolStatus.Borrowed => note is not null ? $"Borrowed from {note}" : "Borrowed",
-        ToolStatus.Rented => note is not null ? $"Rented from {note}" : "Rented",
-        _ => "Owned"
+        ToolStatus.LentOut   => note is not null ? $"Lent to {note}" : "Lent out",
+        ToolStatus.Borrowed  => note is not null ? $"Borrowed from {note}" : "Borrowed",
+        ToolStatus.Rented    => note is not null ? $"Rented from {note}" : "Rented",
+        ToolStatus.Required  => note is not null ? $"Required — {note}" : "Required",
+        _                    => "Owned"
     };
 
     private void Cancel() => MudDialog.Cancel();
